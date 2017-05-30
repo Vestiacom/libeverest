@@ -34,14 +34,17 @@ struct Acceptor {
 	void stop();
 
 private:
-	// Event watcher. Waits for input connections.
-	ev::io mWatcher;
-
 	// Socket's fd.
 	int mFD;
 
+	// Event watcher. Waits for input connections.
+	ev::io mWatcher;
+
 	// Callback for new connections
 	NewConnectionCallback mNewConnectionCallback;
+
+
+	void onNewConnection(ev::io& w, int revents);
 };
 
 } // namespace internals

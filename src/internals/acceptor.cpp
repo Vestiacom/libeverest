@@ -1,10 +1,14 @@
 #include "acceptor.hpp"
 
+
+#include <ev++.h>
 #include <stdexcept>
 #include <string>
 #include <sstream>
 #include <cerrno>
 #include <cstring>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 namespace {
 
@@ -46,6 +50,8 @@ int createListeningSocket(const unsigned short port)
 		msg << "listen() failed with: " << std::strerror(errno);
 		throw std::runtime_error(msg.str());
 	}
+
+	return fd;
 }
 
 } // namespace
@@ -53,14 +59,19 @@ int createListeningSocket(const unsigned short port)
 namespace everest {
 namespace internals {
 
-Acceptor::Acceptor(const unsigned short port, struct ev_loop* evLoop)
-	: mWatcher(evLoop)
+Acceptor::Acceptor(const unsigned short port,
+                   struct ev_loop* evLoop,
+                   const NewConnectionCallback& newConnectionCallback)
+	: mFD(createListeningSocket(port)),
+	  mWatcher(evLoop),
+	  mNewConnectionCallback(newConnectionCallback)
 {
 	mWatcher.set<Acceptor, &Acceptor::onNewConnection>(this);
-	mFD = createListeningSocket();
 }
+
 Acceptor::~Acceptor()
 {
+
 }
 
 void Acceptor::start()
@@ -73,12 +84,23 @@ void Acceptor::stop()
 	mWatcher.stop();
 }
 
-Acceptor::onNewConnection(ev::io& w, int revents)
+void Acceptor::onNewConnection(ev::io& w, int revents)
 {
+	// Unspecified error?
+	if (EV_ERROR & revents) {
+		return;
+	}
 
+	// New proxy connection
+	int fd = ::accept4(w.fd, NULL, NULL, SOCK_NONBLOCK);
+	if (fd < 0) {
+		return;
+	}
+
+	if (mNewConnectionCallback) {
+		mNewConnectionCallback(fd);
+	}
 }
 
 } // namespace internals
 } // namespace everest
-
-#endif // EVEREST_INTERNALS_ACCEPTOR_HPP_
