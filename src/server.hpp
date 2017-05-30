@@ -1,16 +1,21 @@
 #ifndef EVEREST_SERVER_HPP_
 #define EVEREST_SERVER_HPP_
 
+
 #include <ev++.h>
 #include <functional>
+#include <unordered_map>
 
+#include "internals/acceptor.hpp"
+#include "internals/connection.hpp"
 
 namespace everest {
 
+/**
+ * This is the entry point of the library.
+ * Pass callbacks for particular endpoints. 
+ */
 struct Server {
-
-	// typedef std::function<std::string(const std::string&)> Callback;
-
 	Server(const unsigned short port, struct ev_loop* evLoop);
 	~Server();
 
@@ -31,35 +36,20 @@ struct Server {
 	void stop();
 
 private:
-
-	// 
-	// std::unordered_map<int, ev::io> mConnectionsIO;
-
-	// // Output buffers
-	// // Calls to write() put data here and WRITE events take it and send via socket
-	// std::unordered_map<int, std::vector<char>> mBuffers;
-
+	// A list of all active connections
+	std::unordered_map<int, internals::Connection> mConnectionsIO;
 
 	// Event loop
 	struct ev_loop* mEvLoop;
 
-	// Watcher for the incoming data
-	ev::io mIO;
+	// Handles incoming connections
+	internals::Acceptor mAcceptor;
 
-	int mFD;
+	// Called when new connection is established.
+	void onNewConnection(int fd);
 
-	// Creates the input socket
-	void createListeningSocket(const unsigned short port);
-
-	// // Called when new connection is established.
-	// void onNewConnection(ev::io& w, int revents);
-
-	// // Called when data arrived to the socket
-	// void onInput(ev::io& w, int revents);
-
-	// Generic callback for libev. 
-	// Used to write and read data from the connected socket
-	void onEvent(ev::io& w, int revents);
+	// When connection lost
+	void onConectionLost(int fd);
 
 };
 

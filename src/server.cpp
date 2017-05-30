@@ -8,87 +8,32 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include "internals/connection.hpp"
 
-
+using namespace std::placeholders;
 
 namespace everest {
 
-
 Server::Server(const unsigned short port, struct ev_loop* evLoop)
 	: mEvLoop(evLoop),
-	  mIO(mEvLoop)
+	  mAcceptor(port, evLoop, std::bind(&Server::onNewConnection, this, _1))
 {
-	mIO.set<Server, &Server::onEvent>(this);
 
-	// Setup socket fd, but doesn't server requests yet
-	createListeningSocket(port);
 }
 
 Server::~Server()
 {
-
-}
-
-void Server::createListeningSocket(const unsigned short port)
-{
-	// setup socket for TCP proxy
-	mFD = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (mFD == -1) {
-		std::ostringstream msg;
-		msg << "socket() failed with:  " << std::strerror(errno);
-		throw std::runtime_error(msg.str());
-	}
-
-	struct sockaddr_in addr;
-	memset(&addr, 0, sizeof(addr));
-
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = INADDR_ANY;
-
-	int optval = 1;
-	if (::setsockopt(mFD, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
-		std::ostringstream msg;
-		msg << "setsockopt() failed with: " << std::strerror(errno);
-		throw std::runtime_error(msg.str());
-	}
-
-	if (::bind(mFD, (struct sockaddr*) &addr, sizeof(addr)) == -1) {
-		std::ostringstream msg;
-		msg << "bind() failed with: " << std::strerror(errno);
-		throw std::runtime_error(msg.str());
-	}
-
-	if (::listen(mFD, 10) == -1) {
-		std::ostringstream msg;
-		msg << "listen() failed with: " << std::strerror(errno);
-		throw std::runtime_error(msg.str());
-	}
+	mAcceptor.stop();
 }
 
 void Server::start()
 {
-	mIO.start(mFD, ev::READ);
+	mAcceptor.start();
 }
 
 void Server::stop()
 {
-	mIO.stop();
-}
-
-void Server::onEvent(ev::io& /*watcher*/ , int /*revents*/)
-{
-	// if (EV_ERROR & revents) {
-	// 	return;
-	// }
-
-	// if (revents & EV_READ) {
-	// 	onInput();
-	// }
-
-	// if (revents & EV_WRITE) {
-	// 	onOutput();
-	// }
+	mAcceptor.stop();
 }
 
 // void Server::writeSafe(int fd, const void* bufferPtr, const size_t size)
