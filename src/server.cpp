@@ -36,6 +36,11 @@ void Server::stop()
 	mAcceptor.stop();
 }
 
+
+void Server::onNewConnection(int )
+{
+
+}
 // void Server::writeSafe(int fd, const void* bufferPtr, const size_t size)
 // {
 // 	size_t nTotal = 0;

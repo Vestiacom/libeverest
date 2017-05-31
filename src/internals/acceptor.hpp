@@ -43,7 +43,6 @@ private:
 	// Callback for new connections
 	NewConnectionCallback mNewConnectionCallback;
 
-
 	void onNewConnection(ev::io& w, int revents);
 };
 
