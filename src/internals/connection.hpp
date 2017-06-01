@@ -2,6 +2,7 @@
 #define EVEREST_INTERNALS_CONNECTION_HPP_
 
 #include <vector>
+#include <functional>
 #include <ev++.h>
 
 namespace everest {
@@ -11,7 +12,11 @@ namespace internals {
  * Wraps together all data used by one connection and HTTP parsing for this connection.
  */
 struct Connection {
-	Connection(int fd, struct ev_loop* evLoop);
+	typedef std::function<void(void)> InputDataCallback;
+
+	Connection(int fd,
+	           struct ev_loop* evLoop,
+	           const InputDataCallback& inputDataCallback);
 	~Connection();
 
 	Connection(const Connection&) = delete;
@@ -56,6 +61,8 @@ private:
 	// Output buffer
 	std::vector<char> mOUT;
 
+	// Called when a valid request is ready
+	InputDataCallback mInputDataCallback;
 
 };
 

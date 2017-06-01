@@ -8,10 +8,13 @@ namespace everest {
 namespace internals {
 
 
-Connection::Connection(int fd, struct ev_loop* evLoop)
+Connection::Connection(int fd,
+                       struct ev_loop* evLoop,
+                       const InputDataCallback& inputDataCallback)
 	: mInputWatcher(evLoop),
 	  mOutputWatcher(evLoop),
-	  mFD(fd)
+	  mFD(fd),
+	  mInputDataCallback(inputDataCallback)
 {
 	if (!evLoop) {
 		throw std::runtime_error("ev_loop is null");
@@ -54,6 +57,10 @@ void Connection::onInput(ev::io& w, int revents)
 	}
 
 	(void) w;
+
+	if (mInputDataCallback) {
+		mInputDataCallback();
+	}
 
 }
 
