@@ -9,6 +9,9 @@
 #include <cstring>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <unistd.h>
+
+#include <iostream>
 
 namespace {
 
@@ -34,18 +37,24 @@ int createListeningSocket(const unsigned short port)
 
 	int optval = 1;
 	if (::setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
+		::close(fd);
+
 		std::ostringstream msg;
 		msg << "setsockopt() failed with: " << std::strerror(errno);
 		throw std::runtime_error(msg.str());
 	}
 
 	if (::bind(fd, (struct sockaddr*) &addr, sizeof(addr)) == -1) {
+		::close(fd);
+
 		std::ostringstream msg;
 		msg << "bind() failed with: " << std::strerror(errno);
 		throw std::runtime_error(msg.str());
 	}
 
 	if (::listen(fd, 10) == -1) {
+		::close(fd);
+
 		std::ostringstream msg;
 		msg << "listen() failed with: " << std::strerror(errno);
 		throw std::runtime_error(msg.str());
@@ -62,16 +71,23 @@ namespace internals {
 Acceptor::Acceptor(const unsigned short port,
                    struct ev_loop* evLoop,
                    const NewConnectionCallback& newConnectionCallback)
-	: mFD(createListeningSocket(port)),
-	  mWatcher(evLoop),
+	: mWatcher(evLoop),
 	  mNewConnectionCallback(newConnectionCallback)
 {
+	if (!evLoop) {
+		throw std::runtime_error("ev_loop is null");
+	}
+
+	mFD = createListeningSocket(port);
+
 	mWatcher.set<Acceptor, &Acceptor::onNewConnection>(this);
 }
 
 Acceptor::~Acceptor()
 {
+	mWatcher.stop();
 
+	::close(mFD);
 }
 
 void Acceptor::start()

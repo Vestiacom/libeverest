@@ -11,8 +11,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 option(ENABLE_STATIC  "Build static library" OFF)
-option(ENABLE_TESTING "Build tests" OFF)
-option(ENABLE_HEADERS "Install headers"  OFF)
+option(ENABLE_TESTING "Build tests"          ON)
+option(ENABLE_HEADERS "Install headers"      OFF)
 
 ## Build info #################################################################
 message(STATUS "-------------------------------------------------")
