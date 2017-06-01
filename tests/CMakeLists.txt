@@ -10,7 +10,7 @@ add_executable(${UT_PROJECT_NAME} ${SRC} ${TESTS_SRC})
 
 ## Defines #####################################################################
 # Automatically create main function
-add_definitions(-DBOOST_TEST_IGNORE_NON_ZERO_CHILD_CODE) 
+# add_definitions(-DBOOST_TEST_IGNORE_NON_ZERO_CHILD_CODE) 
 
 
 ## Link libraries ##############################################################
@@ -25,7 +25,7 @@ target_link_libraries(${UT_PROJECT_NAME} ${Boost_LIBRARIES} ${DEPS_LIBRARIES} ev
 
 
 ## Integrate with CTest runner #################################################
-add_test(NAME libeverest-unittests COMMAND libeverest-tests --log_level=message )
+add_test(NAME libeverest-unittests COMMAND libeverest-tests --log_level=message --catch_system_errors=no)
 
 
 ## Install #####################################################################

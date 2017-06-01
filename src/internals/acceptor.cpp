@@ -102,8 +102,8 @@ void Acceptor::stop()
 
 void Acceptor::onNewConnection(ev::io& w, int revents)
 {
-	// Unspecified error?
 	if (EV_ERROR & revents) {
+		// Unspecified error
 		return;
 	}
 

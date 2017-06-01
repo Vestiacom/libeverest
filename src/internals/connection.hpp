@@ -8,17 +8,44 @@ namespace everest {
 namespace internals {
 
 /**
- * Wraps together all data used by one connection
+ * Wraps together all data used by one connection and HTTP parsing for this connection.
  */
 struct Connection {
-	Connection(int fd);
+	Connection(int fd, struct ev_loop* evLoop);
+	~Connection();
 
 	Connection(const Connection&) = delete;
 	Connection(Connection&&) = delete;
 	Connection& operator=(const Connection&) = delete;
 
-	// Event watcher. Waits for input or output
-	ev::io mWatcher;
+	/**
+	 * Starts receiving and sending data
+	 */
+	void start();
+
+	/**
+	 * Stops receiving and sending data
+	 */
+	void stop();
+
+	/**
+	 * Write data to the output buffer.
+	 * Will not block.
+	 */
+	void send();
+
+private:
+	// New data on socket
+	void onInput(ev::io& w, int revents);
+
+	// Socket ready to receive data
+	void onOutput(ev::io& w, int revents);
+
+	// Waits for new data
+	ev::io mInputWatcher;
+
+	// Waits when OS is ready to receive data do send
+	ev::io mOutputWatcher;
 
 	// Socket's fd
 	int mFD;
@@ -28,6 +55,8 @@ struct Connection {
 
 	// Output buffer
 	std::vector<char> mOUT;
+
+
 };
 
 } // namespace internals

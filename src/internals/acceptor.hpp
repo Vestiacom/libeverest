@@ -43,6 +43,7 @@ private:
 	// Callback for new connections
 	NewConnectionCallback mNewConnectionCallback;
 
+	// Called by the watcher when new connections appear
 	void onNewConnection(ev::io& w, int revents);
 };
 
