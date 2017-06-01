@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(Accept)
 
 	a.start();
 
-	runParallel("wget localhost:6000 -T 1 --tries=1 -q");
+	runParallel("wget -T 1 --tries=1 -q localhost:" + std::to_string(TEST_PORT));
 
 	ev_run(loop, 0);
 
