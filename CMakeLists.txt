@@ -53,6 +53,8 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 	add_definitions("-Wno-gnu-zero-variadic-macro-arguments")
 endif()
 
+## External projects ##########################################################
+include(http-parser.cmake)
 
 ## Various install paths ######################################################
 ## default CMAKE_INSTALL_* variables

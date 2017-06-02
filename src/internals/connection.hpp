@@ -2,8 +2,10 @@
 #define EVEREST_INTERNALS_CONNECTION_HPP_
 
 #include <vector>
-#include <functional>
+#include <functional> // std::function
+#include <memory> // std::unique_ptr
 #include <ev++.h>
+#include <http_parser.h>
 
 namespace everest {
 namespace internals {
@@ -40,6 +42,22 @@ struct Connection {
 	void send();
 
 private:
+
+	// Message is parsed and request is ready
+	static int onMessageComplete(http_parser*);
+
+	// On URL string
+	static int onURL(http_parser*, const char* at, size_t length);
+
+	// On header key
+	static int onHeaderField(http_parser*, const char* at, size_t length);
+
+	// On header value
+	static int onHeaderValue(http_parser*, const char* at, size_t length);
+
+	// Body chunk
+	static int onBody(http_parser*, const char* at, size_t length);
+
 	// New data on socket
 	void onInput(ev::io& w, int revents);
 
@@ -61,8 +79,13 @@ private:
 	// Output buffer
 	std::vector<char> mOUT;
 
+	// http-parser structure
+	std::unique_ptr<http_parser> mParser;
+
 	// Called when a valid request is ready
 	InputDataCallback mInputDataCallback;
+
+
 
 };
 

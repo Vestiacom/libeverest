@@ -41,7 +41,6 @@ private:
 };
 
 } // namespace internals
-
 } // namespace everest
 
 #endif // EVEREST_INTERNALS_REQUEST_HPP_

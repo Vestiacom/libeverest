@@ -21,10 +21,15 @@ if (ENABLE_STATIC)
     set_target_properties(${STATIC_TARGET} PROPERTIES
                           OUTPUT_NAME ${SHARED_TARGET}
                           VERSION     ${_LIB_VERSION_})
+    
+    add_dependencies(${STATIC_TARGET} ${HTTPPARSER})
+
+    target_link_libraries(${STATIC_TARGET} STATIC ${HTTPPARSER_LIBRARIES})
 
     install(TARGETS     ${STATIC_TARGET}
             COMPONENT   ${STATIC_TARGET}
             DESTINATION ${LIB_INSTALL_DIR})
+
 
 endif(ENABLE_STATIC)
 
@@ -33,7 +38,13 @@ set_target_properties(${SHARED_TARGET} PROPERTIES
                       SOVERSION   ${_LIB_SOVERSION_}
                       VERSION     ${_LIB_VERSION_})
 
-# target_link_libraries(${SHARED_TARGET} ssl)
+add_dependencies(${SHARED_TARGET} ${HTTPPARSER})
+
+target_link_libraries(${SHARED_TARGET} STATIC ${HTTPPARSER_LIBRARIES})
+
+## Includes ####################################################################
+include_directories(SYSTEM ${HTTPPARSER_INCLUDE_DIRS})
+
 
 ## Install #####################################################################
 install(FILES       ${CMAKE_CURRENT_BINARY_DIR}/${PC_FILE}
