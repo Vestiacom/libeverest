@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(ReceiveData)
 	c.start();
 
 
-	BOOST_CHECK(-1 !=::write(fd[1], TEST_DATA.c_str(), TEST_DATA.size()));
+	BOOST_CHECK(-1 != ::write(fd[1], TEST_DATA.c_str(), TEST_DATA.size()));
 
 	ev_run(loop, 0);
 

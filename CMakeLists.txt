@@ -29,9 +29,9 @@ message(STATUS "-------------------------------------------------")
 include(FindPkgConfig)
 
 ## Build options ##############################################################
-set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_C_FLAGS_RELEASE} -std=c++11 -Os")
-set(CMAKE_CXX_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG}   -std=c++11 -O0 -ggdb")
-set(CMAKE_CXX_FLAGS_SANITIZE "${CMAKE_C_FLAGS_DEBUG}   -std=c++11 -O0 -ggdb -fsanitize=address -static-libasan -fno-omit-frame-pointer" )
+set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_C_FLAGS_RELEASE} -std=c++17 -Os")
+set(CMAKE_CXX_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG}   -std=c++17 -O0 -ggdb")
+set(CMAKE_CXX_FLAGS_SANITIZE "${CMAKE_C_FLAGS_DEBUG}   -std=c++17 -O0 -ggdb -fsanitize=address -static-libasan -fno-omit-frame-pointer" )
 
 ## Definitions ################################################################
 add_definitions("-fPIC")
