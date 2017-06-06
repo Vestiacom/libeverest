@@ -24,7 +24,7 @@ if (ENABLE_STATIC)
     
     add_dependencies(${STATIC_TARGET} ${HTTPPARSER})
 
-    target_link_libraries(${STATIC_TARGET} STATIC ${HTTPPARSER_LIBRARIES})
+    target_link_libraries(${STATIC_TARGET} ${HTTPPARSER_LIBRARIES})
 
     install(TARGETS     ${STATIC_TARGET}
             COMPONENT   ${STATIC_TARGET}
@@ -40,7 +40,7 @@ set_target_properties(${SHARED_TARGET} PROPERTIES
 
 add_dependencies(${SHARED_TARGET} ${HTTPPARSER})
 
-target_link_libraries(${SHARED_TARGET} STATIC ${HTTPPARSER_LIBRARIES})
+target_link_libraries(${SHARED_TARGET} ${HTTPPARSER_LIBRARIES})
 
 ## Includes ####################################################################
 include_directories(SYSTEM ${HTTPPARSER_INCLUDE_DIRS})

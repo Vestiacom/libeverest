@@ -14,7 +14,7 @@ Connection::Connection(int fd,
 	: mInputWatcher(evLoop),
 	  mOutputWatcher(evLoop),
 	  mFD(fd),
-	  mParser(new ::http_parser)
+	  mParser(new ::http_parser),
 	  mInputDataCallback(inputDataCallback)
 {
 	if (!evLoop) {
