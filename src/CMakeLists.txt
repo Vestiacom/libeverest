@@ -13,8 +13,9 @@ set(SHARED_TARGET ${PROJECT_NAME})
 ## Generate the pc file ########################################################
 configure_file(${PC_FILE}.in ${CMAKE_CURRENT_BINARY_DIR}/${PC_FILE} @ONLY)
 
-## Link libraries ##############################################################
+## Defines #####################################################################
 
+## Link libraries ##############################################################
 if (ENABLE_STATIC)
 
     add_library(${STATIC_TARGET} STATIC ${SRCS})

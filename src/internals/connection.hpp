@@ -1,9 +1,11 @@
 #ifndef EVEREST_INTERNALS_CONNECTION_HPP_
 #define EVEREST_INTERNALS_CONNECTION_HPP_
 
+#include "request.hpp"
+
 #include <vector>
-#include <functional> // std::function
-#include <memory> // std::unique_ptr
+#include <functional>
+#include <memory>
 #include <ev++.h>
 #include <http_parser.h>
 
@@ -14,7 +16,7 @@ namespace internals {
  * Wraps together all data used by one connection and HTTP parsing for this connection.
  */
 struct Connection {
-	typedef std::function<void(void)> InputDataCallback;
+	typedef std::function<void(const std::shared_ptr<Request>&)> InputDataCallback;
 
 	Connection(int fd,
 	           struct ev_loop* evLoop,
@@ -43,20 +45,29 @@ struct Connection {
 
 private:
 
+	// Http proxy initialization
+	void setupHttpProxy();
+
+	// Headers parsing finished
+	static int onHeadersComplete(::http_parser*);
+
+	// New message parsing started
+	static int onMessageBegin(::http_parser*);
+
 	// Message is parsed and request is ready
-	static int onMessageComplete(http_parser*);
+	static int onMessageComplete(::http_parser*);
 
 	// On URL string
-	static int onURL(http_parser*, const char* at, size_t length);
+	static int onURL(::http_parser*, const char* at, size_t length);
 
 	// On header key
-	static int onHeaderField(http_parser*, const char* at, size_t length);
+	static int onHeaderField(::http_parser*, const char* at, size_t length);
 
 	// On header value
-	static int onHeaderValue(http_parser*, const char* at, size_t length);
+	static int onHeaderValue(::http_parser*, const char* at, size_t length);
 
 	// Body chunk
-	static int onBody(http_parser*, const char* at, size_t length);
+	static int onBody(::http_parser*, const char* at, size_t length);
 
 	// New data on socket
 	void onInput(ev::io& w, int revents);
@@ -73,20 +84,25 @@ private:
 	// Socket's fd
 	int mFD;
 
-	// Input buffer
-	std::vector<char> mIN;
-
-	// Output buffer
-	std::vector<char> mOUT;
+	// The request that's being parsed
+	std::shared_ptr<Request> mRequest;
 
 	// http-parser structure
-	std::unique_ptr<http_parser> mParser;
+	std::unique_ptr<::http_parser> mParser;
+
+	// http-parser settings structure
+	::http_parser_settings mParserSettings;
 
 	// Called when a valid request is ready
 	InputDataCallback mInputDataCallback;
 
+	// Helper variable for parsing http headers. 
+	// Last parsed http position was "key". Header is (key:value).
+	bool mIsParsingHeaderKey;
 
-
+	// Helper variable for parsing http headers. 
+	std::string mLastHeaderKey;
+	std::string mLastHeaderValue;
 };
 
 } // namespace internals

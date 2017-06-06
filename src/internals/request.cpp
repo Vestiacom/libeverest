@@ -17,9 +17,10 @@ Request::~Request()
 }
 
 
-void Request::setURL(const std::string& url)
+void Request::appendURL(const std::string& url)
 {
-	mURL = url;
+	// Long ULR are rare, don't use a string stream
+	mURL += url;
 }
 
 const std::string& Request::getURL()

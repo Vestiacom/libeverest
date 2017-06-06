@@ -20,7 +20,7 @@ struct Request {
 	Request(Request&&) = delete;
 	Request& operator=(const Request&) = delete;
 
-	void setURL(const std::string& url);
+	void appendURL(const std::string& url);
 	const std::string& getURL();
 
 	void setHeader(const std::string& key, const std::string& value);
@@ -38,6 +38,7 @@ private:
 	std::string mURL;
 
 	std::stringstream mBodyStream;
+
 };
 
 } // namespace internals

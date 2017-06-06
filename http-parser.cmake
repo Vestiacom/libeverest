@@ -11,11 +11,12 @@ ExternalProject_add(
     PREFIX libhttp-parser 
     CONFIGURE_COMMAND ""
     SOURCE_DIR ${CMAKE_SOURCE_DIR}/submodules/http-parser
-    BUILD_COMMAND make package
+    BUILD_COMMAND make clean && make CFLAGS=-fPIC package
 	INSTALL_COMMAND make install PREFIX=${CMAKE_BINARY_DIR}/libhttp-parser 
 )
 
 #
 ExternalProject_Get_Property(${HTTPPARSER} install_dir)
+
 set(HTTPPARSER_INCLUDE_DIRS ${install_dir}/include)
 set(HTTPPARSER_LIBRARIES ${CMAKE_SOURCE_DIR}/submodules/http-parser/libhttp_parser.a)
