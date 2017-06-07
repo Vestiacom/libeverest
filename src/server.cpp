@@ -12,6 +12,11 @@
 
 using namespace std::placeholders;
 
+// TODO: Remove
+#include <iostream>
+using namespace std;
+
+
 namespace everest {
 
 Server::Server(const unsigned short port, struct ev_loop* evLoop)
@@ -23,7 +28,8 @@ Server::Server(const unsigned short port, struct ev_loop* evLoop)
 
 Server::~Server()
 {
-	mAcceptor.stop();
+	stop();
+
 }
 
 void Server::start()
@@ -34,58 +40,35 @@ void Server::start()
 void Server::stop()
 {
 	mAcceptor.stop();
+	for (auto& connection : mConnections) {
+		connection.second->stop();
+	}
 }
 
-
-void Server::onNewConnection(int )
+void Server::endpoint(const std::string& url, const EndpointCallback& endpointCallback)
 {
-
+	mEndpointCallbacks[url] = endpointCallback;
 }
-// void Server::writeSafe(int fd, const void* bufferPtr, const size_t size)
-// {
-// 	size_t nTotal = 0;
-// 	for (;;) {
-// 		auto data = reinterpret_cast<const char*>(bufferPtr) + nTotal;
 
-// 		int n  = ::write(fd, data, size - nTotal);
-// 		if (n >= 0) {
-// 			nTotal += n;
-// 			if (nTotal == size) {
-// 				// All data is written, break loop
-// 				break;
-// 			}
-// 		} else if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-// 			// Neglected errors
-// 		} else {
-// 			const std::string msg = "write() failed with: " + strerrorSafe();
-// 			// LOG4CPLlUS_ERROR(logger, msg);
+void Server::onNewConnection(int fd)
+{
+	// Acceptor accepted a new connection
+	auto connection = std::make_shared<internals::Connection>(fd,
+	                                                          mEvLoop,
+	                                                          std::bind(&Server::onNewRequest, this, _1));
+	connection->start();
+	mConnections[fd] = connection;
+}
 
-// 			// TODO: Throw
-// 			return;
-// 		}
-// 	}
-// }
+void Server::onNewRequest(const std::shared_ptr<Request>& r)
+{
+	try {
+		mEndpointCallbacks[r->getURL()](r);
+	} catch(const std::out_of_range&) {
+		// No callback for this URL
+	}
+}
 
-// void  Server::onNewConnection()
-// {
-
-// }
-
-
-// void Server::onInput(ev::io& watcher)
-// {
-
-// }
-
-// void Server::onOutput(ev::io& watcher)
-// {
-
-// 	// if (writeBuffer.empty()) {
-// 	// 	io.set(ev::READ);
-// 	// } else {
-// 	// 	io.set(ev::READ | ev::WRITE);
-// 	// }
-// }
 
 
 } // namespace everest

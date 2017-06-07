@@ -294,6 +294,31 @@ int Connection::onBody(::http_parser* parser, const char* at, size_t length)
 	}
 }
 
+// void Server::writeSafe(int fd, const void* bufferPtr, const size_t size)
+// {
+// 	size_t nTotal = 0;
+// 	for (;;) {
+// 		auto data = reinterpret_cast<const char*>(bufferPtr) + nTotal;
+
+// 		int n  = ::write(fd, data, size - nTotal);
+// 		if (n >= 0) {
+// 			nTotal += n;
+// 			if (nTotal == size) {
+// 				// All data is written, break loop
+// 				break;
+// 			}
+// 		} else if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+// 			// Neglected errors
+// 		} else {
+// 			const std::string msg = "write() failed with: " + strerrorSafe();
+// 			// LOG4CPLlUS_ERROR(logger, msg);
+
+// 			// TODO: Throw
+// 			return;
+// 		}
+// 	}
+// }
+
 
 
 } // namespace internals

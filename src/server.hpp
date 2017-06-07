@@ -13,9 +13,12 @@ namespace everest {
 
 /**
  * This is the entry point of the library.
- * Pass callbacks for particular endpoints. 
+ * Pass callbacks for particular endpoints.
  */
 struct Server {
+	typedef std::function<void(const std::shared_ptr<Request>&)> EndpointCallback;
+
+
 	Server(const unsigned short port, struct ev_loop* evLoop);
 	~Server();
 
@@ -35,9 +38,20 @@ struct Server {
 	 */
 	void stop();
 
+	/**
+	 * Registers callback for given URL
+	 * 
+	 * @param url endpoint's URL
+	 * @param endpointCallback called when there's a request for this URL
+	 */
+	void endpoint(const std::string& url, const EndpointCallback& endpointCallback);
+
 private:
 	// A list of all active connections
-	std::unordered_map<int, internals::Connection> mConnectionsIO;
+	std::unordered_map<int, std::shared_ptr<internals::Connection>> mConnections;
+
+	// Endpoints connected to the
+	std::unordered_map<std::string, EndpointCallback> mEndpointCallbacks;
 
 	// Event loop
 	struct ev_loop* mEvLoop;
@@ -50,6 +64,9 @@ private:
 
 	// When connection lost
 	void onConectionLost(int fd);
+
+	// New request arrived
+	void onNewRequest(const std::shared_ptr<Request>& r);
 
 };
 
