@@ -14,7 +14,6 @@ Response::~Response()
 {
 }
 
-
 void Response::setStatus(const unsigned short status)
 {
 	mStatus = status;

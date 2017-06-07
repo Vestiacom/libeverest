@@ -8,8 +8,11 @@
 
 #include "internals/acceptor.hpp"
 #include "internals/connection.hpp"
+#include "request.hpp"
 
 namespace everest {
+
+class Request;
 
 /**
  * This is the entry point of the library.
@@ -17,7 +20,6 @@ namespace everest {
  */
 struct Server {
 	typedef std::function<void(const std::shared_ptr<Request>&)> EndpointCallback;
-
 
 	Server(const unsigned short port, struct ev_loop* evLoop);
 	~Server();
@@ -40,7 +42,7 @@ struct Server {
 
 	/**
 	 * Registers callback for given URL
-	 * 
+	 *
 	 * @param url endpoint's URL
 	 * @param endpointCallback called when there's a request for this URL
 	 */

@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "internals/connection.hpp"
+#include "types.hpp"
 
 namespace everest {
 
@@ -19,12 +20,16 @@ class Connection;
  * Handles data appending to ease HTTP parsing.
  */
 struct Request {
+
 	Request(const std::shared_ptr<internals::Connection>& connection);
 	~Request();
 
 	Request(const Request&) = delete;
 	Request(Request&&) = delete;
 	Request& operator=(const Request&) = delete;
+
+	void setMethod(const unsigned int method);
+	HTTPMethod getMethod();
 
 	void appendURL(const std::string& url);
 	const std::string& getURL();
@@ -40,6 +45,8 @@ private:
 	typedef std::list<std::pair<std::string, std::string>> headers_t;
 	headers_t::iterator findHeader(const std::string& key);
 	headers_t mHeaders;
+
+	HTTPMethod mMethod;
 
 	std::string mURL;
 

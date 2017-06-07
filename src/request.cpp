@@ -16,6 +16,16 @@ Request::~Request()
 }
 
 
+void Request::setMethod(const unsigned int method)
+{
+	mMethod = static_cast<HTTPMethod>(method);
+}
+
+HTTPMethod Request::getMethod()
+{
+	return mMethod;
+}
+
 void Request::appendURL(const std::string& url)
 {
 	// Long ULR are rare, don't use a string stream

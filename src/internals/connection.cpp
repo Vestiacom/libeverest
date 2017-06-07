@@ -265,8 +265,11 @@ int Connection::onHeadersComplete(::http_parser* parser)
 
 		Connection& conn = *static_cast<Connection*>(parser->data);
 
-		// Set the last key:value header pair
-		conn.mRequest->setHeader(conn.mLastHeaderKey, conn.mLastHeaderValue);
+		if (!conn.mLastHeaderKey.empty() && !conn.mLastHeaderValue.empty()) {
+			// Set the last key:value header pair (if it exists)
+			conn.mRequest->setHeader(conn.mLastHeaderKey, conn.mLastHeaderValue);
+		}
+		conn.mRequest->setMethod(parser->method);
 
 		conn.mLastHeaderKey.resize(0);
 		conn.mLastHeaderValue.resize(0);

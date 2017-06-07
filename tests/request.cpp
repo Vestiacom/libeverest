@@ -3,6 +3,7 @@
 #include "request.hpp"
 #include "common.hpp"
 
+
 const std::string TEST_URL = "http://some/url";
 const std::string TEST_BODY = "TEST BODY STRING";
 
@@ -15,13 +16,20 @@ BOOST_AUTO_TEST_CASE(Constructor)
 	BOOST_CHECK_NO_THROW(Request r(nullptr));
 }
 
+BOOST_AUTO_TEST_CASE(Method)
+{
+	Request r(nullptr);
+	r.setMethod(static_cast<unsigned int>(HTTPMethod::HTTP_GET));
+	BOOST_CHECK_EQUAL(static_cast<unsigned int>(HTTPMethod::HTTP_GET), r.getMethod());
+}
+
 BOOST_AUTO_TEST_CASE(URL)
 {
 	Request r(nullptr);
 	r.appendURL(TEST_URL);
 	BOOST_CHECK_EQUAL(TEST_URL, r.getURL());
 	r.appendURL(TEST_URL);
-	BOOST_CHECK_EQUAL(TEST_URL+TEST_URL, r.getURL());
+	BOOST_CHECK_EQUAL(TEST_URL + TEST_URL, r.getURL());
 }
 
 BOOST_AUTO_TEST_CASE(Headers)
