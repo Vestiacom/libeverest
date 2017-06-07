@@ -7,7 +7,8 @@ namespace everest {
 namespace internals {
 
 
-Request::Request()
+Request::Request(const std::shared_ptr<internals::Connection>& connection)
+	: mConnection(connection)
 {
 
 }
@@ -30,7 +31,6 @@ const std::string& Request::getURL()
 
 Request::headers_t::iterator Request::findHeader(const std::string& key)
 {
-
 	return std::find_if(mHeaders.begin(), mHeaders.end(), [&key](auto header) {
 		return header.first == key;
 	});

@@ -1,32 +1,29 @@
 #include <boost/test/unit_test.hpp>
 
-#include "internals/request.hpp"
+#include "response.hpp"
 #include "common.hpp"
 
-const std::string TEST_URL = "http://some/url";
 const std::string TEST_BODY = "TEST BODY STRING";
 
-BOOST_AUTO_TEST_SUITE(RequestTestSuite)
+BOOST_AUTO_TEST_SUITE(ResponseTestSuite)
 
-using namespace everest::internals;
+using namespace everest;
 
 BOOST_AUTO_TEST_CASE(Constructor)
 {
-	BOOST_CHECK_NO_THROW(Request r(nullptr));
+	BOOST_CHECK_NO_THROW(Response r(nullptr));
 }
 
-BOOST_AUTO_TEST_CASE(URL)
+BOOST_AUTO_TEST_CASE(Status)
 {
-	Request r(nullptr);
-	r.appendURL(TEST_URL);
-	BOOST_CHECK_EQUAL(TEST_URL, r.getURL());
-	r.appendURL(TEST_URL);
-	BOOST_CHECK_EQUAL(TEST_URL+TEST_URL, r.getURL());
+	Response r(nullptr);
+	r.setStatus(200);
+	BOOST_CHECK_EQUAL(200, r.getStatus());
 }
 
 BOOST_AUTO_TEST_CASE(Headers)
 {
-	Request r(nullptr);
+	Response r(nullptr);
 
 	for (int i = 0; i < 10; ++i) {
 		auto x = std::to_string(i);
@@ -41,7 +38,7 @@ BOOST_AUTO_TEST_CASE(Headers)
 
 BOOST_AUTO_TEST_CASE(Body)
 {
-	Request r(nullptr);
+	Response r(nullptr);
 	r.appendBody(TEST_BODY);
 	BOOST_CHECK_EQUAL(TEST_BODY, r.getBody());
 

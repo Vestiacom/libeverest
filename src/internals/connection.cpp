@@ -1,6 +1,7 @@
 #include "connection.hpp"
 
 #include <vector>
+#include <map>
 #include <ev++.h>
 #include <unistd.h>
 #include <cerrno>
@@ -9,12 +10,21 @@
 // #include <sys/types.h>
 // #include <sys/socket.h>
 
-
-
 // TODO: Reomove
 #include <iostream>
 using namespace std;
 
+namespace {
+
+// String statuses tied to the status code.
+// Using http-parser macro.
+std::map<int, std::string> gStatuses  = {
+#define XX(num, name, string) {num, #string},
+	HTTP_STATUS_MAP(XX)
+#undef XX
+};
+
+} // namespace
 
 namespace everest {
 namespace internals {
@@ -126,13 +136,24 @@ void Connection::send()
 
 }
 
+void Connection::resetRequest()
+{
+	try {
+		mRequest = std::make_shared<Request>(shared_from_this());
+	} catch (std::bad_weak_ptr& e) {
+		// Pathological situation - Connection isn't owned by by shared_ptr.
+		// This exception is thrown since in C++17
+		mRequest = std::make_shared<Request>(nullptr);
+	}
+}
+
 int Connection::onMessageBegin(::http_parser* parser)
 {
 	cout << "onMessageBegin" << endl;
 
 	try {
 		Connection& conn = *static_cast<Connection*>(parser->data);
-		conn.mRequest = std::make_shared<Request>();
+		conn.resetRequest();
 
 		// Continue parsing
 		return 0;

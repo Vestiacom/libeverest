@@ -12,10 +12,16 @@
 namespace everest {
 namespace internals {
 
+class Request;
+
 /**
  * Wraps together all data used by one connection and HTTP parsing for this connection.
+ *
+ * Connections should be referenced only by std::shared_ptr,
+ * because the Requests stores reference to the connection in a std::shared_ptr.
+ * This way library user can always respond to a request. Only by having the Request object.
  */
-struct Connection {
+struct Connection: std::enable_shared_from_this<Connection> {
 	typedef std::function<void(const std::shared_ptr<Request>&)> InputDataCallback;
 
 	Connection(int fd,
@@ -69,6 +75,9 @@ private:
 	// Body chunk
 	static int onBody(::http_parser*, const char* at, size_t length);
 
+	// Resets the last received request (creates a new one)
+	void resetRequest();
+
 	// New data on socket
 	void onInput(ev::io& w, int revents);
 
@@ -96,17 +105,16 @@ private:
 	// Called when a valid request is ready
 	InputDataCallback mInputDataCallback;
 
-	// Helper variable for parsing http headers. 
+	// Helper variable for parsing http headers.
 	// Last parsed http position was "key". Header is (key:value).
 	bool mIsParsingHeaderKey;
 
-	// Helper variable for parsing http headers. 
+	// Helper variable for parsing http headers.
 	std::string mLastHeaderKey;
 	std::string mLastHeaderValue;
 };
 
 } // namespace internals
-
 } // namespace everest
 
 #endif // EVEREST_INTERNALS_CONNECTION_HPP_
