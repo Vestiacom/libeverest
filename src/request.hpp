@@ -6,19 +6,20 @@
 #include <sstream>
 #include <memory>
 
-#include "connection.hpp"
+#include "internals/connection.hpp"
 
 namespace everest {
-namespace internals {
 
+namespace internals {
 class Connection;
+}
 
 /**
  * Keeps all data of an incoming HTTP request.
  * Handles data appending to ease HTTP parsing.
  */
 struct Request {
-	Request(const std::shared_ptr<Connection>& connection);
+	Request(const std::shared_ptr<internals::Connection>& connection);
 	~Request();
 
 	Request(const Request&) = delete;
@@ -44,11 +45,10 @@ private:
 
 	std::stringstream mBodyStream;
 
-	std::shared_ptr<Connection> mConnection;
+	std::shared_ptr<internals::Connection> mConnection;
 
 };
 
-} // namespace internals
 } // namespace everest
 
 #endif // EVEREST_INTERNALS_REQUEST_HPP_

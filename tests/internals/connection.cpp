@@ -4,11 +4,12 @@
 
 #include <string>
 #include "internals/connection.hpp"
-#include "internals/request.hpp"
+#include "request.hpp"
 #include <iostream>
 
 BOOST_AUTO_TEST_SUITE(ConnectionTestSuite)
 
+using namespace everest;
 using namespace everest::internals;
 
 const std::string TEST_URL = "/test";

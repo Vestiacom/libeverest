@@ -1,7 +1,7 @@
 #ifndef EVEREST_INTERNALS_CONNECTION_HPP_
 #define EVEREST_INTERNALS_CONNECTION_HPP_
 
-#include "request.hpp"
+#include "../request.hpp"
 
 #include <vector>
 #include <functional>
@@ -10,9 +10,11 @@
 #include <http_parser.h>
 
 namespace everest {
-namespace internals {
 
 class Request;
+
+namespace internals {
+
 
 /**
  * Wraps together all data used by one connection and HTTP parsing for this connection.

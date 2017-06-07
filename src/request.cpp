@@ -4,8 +4,6 @@
 
 
 namespace everest {
-namespace internals {
-
 
 Request::Request(const std::shared_ptr<internals::Connection>& connection)
 	: mConnection(connection)
@@ -63,5 +61,4 @@ std::string Request::getBody()
 	return mBodyStream.str();
 }
 
-} // namespace internals
 } // namespace everest

@@ -1,6 +1,6 @@
 #include <boost/test/unit_test.hpp>
 
-#include "internals/request.hpp"
+#include "request.hpp"
 #include "common.hpp"
 
 const std::string TEST_URL = "http://some/url";
@@ -8,7 +8,7 @@ const std::string TEST_BODY = "TEST BODY STRING";
 
 BOOST_AUTO_TEST_SUITE(RequestTestSuite)
 
-using namespace everest::internals;
+using namespace everest;
 
 BOOST_AUTO_TEST_CASE(Constructor)
 {
