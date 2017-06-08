@@ -1,7 +1,10 @@
 #include <boost/test/unit_test.hpp>
 
-#include "response.hpp"
+#define protected public
+
+
 #include "common.hpp"
+#include "response.hpp"
 
 const std::string TEST_BODY = "TEST BODY STRING";
 

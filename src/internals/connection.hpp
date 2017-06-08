@@ -3,6 +3,7 @@
 
 #include "../request.hpp"
 
+#include <queue>
 #include <vector>
 #include <functional>
 #include <memory>
@@ -12,6 +13,7 @@
 namespace everest {
 
 class Request;
+class Response;
 
 namespace internals {
 
@@ -22,6 +24,11 @@ namespace internals {
  * Connections should be referenced only by std::shared_ptr,
  * because the Requests stores reference to the connection in a std::shared_ptr.
  * This way library user can always respond to a request. Only by having the Request object.
+ *
+ * TODO: use shutdown before close
+ * TODO: graceful shutdown. Allow sending out data.
+ * TODO: shutdown/close after error on socket or remote closure
+ *
  */
 struct Connection: std::enable_shared_from_this<Connection> {
 	typedef std::function<void(const std::shared_ptr<Request>&)> InputDataCallback;
@@ -49,12 +56,15 @@ struct Connection: std::enable_shared_from_this<Connection> {
 	 * Write data to the output buffer.
 	 * Will not block.
 	 */
-	void send();
+	void send(const std::shared_ptr<Response>& bufferPtr);
 
 private:
 
 	// Http proxy initialization
 	void setupHttpProxy();
+
+	// Pop the oldest Request and serialize it to the output buffer
+	void fillBuffer();
 
 	// Headers parsing finished
 	static int onHeadersComplete(::http_parser*);
@@ -114,6 +124,17 @@ private:
 	// Helper variable for parsing http headers.
 	std::string mLastHeaderKey;
 	std::string mLastHeaderValue;
+
+	// When Response is send it serializes into a buffer and gets stored here.
+	// Responses are send in order, one by one, in the onOutput callback.
+	std::queue<Response> mResponses;
+
+	// Buffer with the latest response to send
+	std::vector<char> mOutputBuffer;
+
+	// Position in the latest buffer.
+	// Some data might have been send - this is the position of the unsent data.
+	std::size_t mOutputBufferPosition;
 };
 
 } // namespace internals

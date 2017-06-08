@@ -1,7 +1,7 @@
 #include <boost/test/unit_test.hpp>
 
-#include "request.hpp"
 #include "common.hpp"
+#include "request.hpp"
 
 
 const std::string TEST_URL = "http://some/url";

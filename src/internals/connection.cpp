@@ -83,7 +83,10 @@ void Connection::setupHttpProxy()
 void Connection::start()
 {
 	mInputWatcher.start(mFD, ev::READ);
-	mOutputWatcher.start(mFD, ev::WRITE);
+
+	if (!mResponses.empty()) {
+		mOutputWatcher.start(mFD, ev::WRITE);
+	}
 }
 
 void Connection::stop()
@@ -107,7 +110,7 @@ void Connection::onInput(ev::io& w, int revents)
 
 	ssize_t recved = ::read(w.fd, buf, len);
 	if (recved < 0) {
-		// TODO: Test throwing in libev watcher
+		// TODO: Test throwing in libev watcherresponse.getStatus()
 		std::ostringstream msg;
 		msg << "Error when reading the Connection's socket:" <<  std::strerror(errno);
 		throw std::runtime_error(msg.str());
@@ -120,20 +123,105 @@ void Connection::onInput(ev::io& w, int revents)
 	}
 }
 
+void Connection::fillBuffer()
+{
+	auto& response = *mResponses.front();
+
+	// Status line ------------------------------------------------------------
+	// For example:
+	// HTTP/1.1 200 OK
+	// HTTP/1.0 404 Not Found
+	// HTTP/1.1 403 Forbidden
+
+	std::string data = "HTTP/1.1 ";
+	std::copy(data.begin(), data.end(), std::back_inserter(mOutputBuffer));
+
+	data = std::to_string(response.getStatus()) + " ";
+	std::copy(data.begin(), data.end(), std::back_inserter(mOutputBuffer));
+
+	std::string& statusText = gStatuses[response.getStatus()];
+	std::copy(statusText.begin(), statusText.end(), std::back_inserter(mOutputBuffer));
+
+	data = "\r\n";
+	std::copy(data.begin(), data.end(), std::back_inserter(mOutputBuffer));
+
+	// Headers -----------------------------------------------------------------
+	// Accept-Ranges: bytes
+	// Content-Length: 44
+	// Connection: close
+
+	const auto& headers = response.getHeaders();
+	for (const auto & header; headers) {
+		std::copy(header.first.begin(), header.first.end(), std::back_inserter(mOutputBuffer));
+		mOutputBuffer.push_back(':');
+		std::copy(header.second.begin(), header.second.end(), std::back_inserter(mOutputBuffer));
+		std::copy(data.begin(), data.end(), std::back_inserter(mOutputBuffer));
+	}
+
+	std::copy(data.begin(), data.end(), std::back_inserter(mOutputBuffer));
+
+	// Body -------------------------------------------------------------------
+	// Body is already URL encoded
+	std::copy(data.begin(), data.end(), std::back_inserter(mOutputBuffer));
+
+	mResponses.pop();
+}
+
 void Connection::onOutput(ev::io& w, int revents)
 {
 	if (EV_ERROR & revents) {
 		// Unspecified error
+		std::ostringstream msg;
+		msg << "Unspecified error in output callback: " <<  std::strerror(errno);
+		throw std::runtime_error(msg.str());
 		return;
 	}
 
-	(void) w;
-	// TODO: Implement async data sending
+
+	// Ensure output buffer has any data to send
+	if (mOutputBufferPosition >= mOutputBuffer.size()) {
+		// No data to send in mOutputBuffer.
+
+		if (mResponses.empty()) {
+			// And there's no more responses to send.
+			// Pause sending and free the buffer.
+			mOutputBufferPosition = 0;
+			mOutputBuffer.clear();
+			mOutputWatcher.stop();
+			return;
+		}
+
+		// Fill mOutputBuffer with the next serialized Response from the queue.
+		mOutputBufferPosition = 0;
+		mOutputBuffer.resize(0);
+		fillBuffer();
+	}
+
+	ssize_t n  = ::write(w.fd,
+	                     &mOutputBuffer[mOutputBufferPosition],
+	                     mOutputBuffer.size() - mOutputBufferPosition);
+	if (n >= 0) {
+		mOutputBufferPosition += n;
+	} else if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+		// Neglected errors
+	} else {
+		std::ostringstream msg;
+		msg << "write() failed with: " <<  std::strerror(errno);
+		throw std::runtime_error(msg.str());
+	}
 }
 
-void Connection::send()
+void Connection::send(const std::shared_ptr<Response>& response)
 {
 
+	// 	std::string str = "hello";
+	// std::vector<char> data = /* ... */;
+	//
+
+	mResponses.push(response);
+
+	// Ensure sending data is switched on
+	mOutputWatcher.start(mFD, ev::WRITE);
 }
 
 void Connection::resetRequest()
@@ -296,33 +384,6 @@ int Connection::onBody(::http_parser* parser, const char* at, size_t length)
 		return -1;
 	}
 }
-
-// void Server::writeSafe(int fd, const void* bufferPtr, const size_t size)
-// {
-// 	size_t nTotal = 0;
-// 	for (;;) {
-// 		auto data = reinterpret_cast<const char*>(bufferPtr) + nTotal;
-
-// 		int n  = ::write(fd, data, size - nTotal);
-// 		if (n >= 0) {
-// 			nTotal += n;
-// 			if (nTotal == size) {
-// 				// All data is written, break loop
-// 				break;
-// 			}
-// 		} else if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-// 			// Neglected errors
-// 		} else {
-// 			const std::string msg = "write() failed with: " + strerrorSafe();
-// 			// LOG4CPLlUS_ERROR(logger, msg);
-
-// 			// TODO: Throw
-// 			return;
-// 		}
-// 	}
-// }
-
-
 
 } // namespace internals
 } // namespace everest

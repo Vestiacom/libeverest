@@ -6,10 +6,12 @@
 #include <sstream>
 #include <memory>
 
-#include "internals/connection.hpp"
+// #include "internals/connection.hpp"
+#include "response.hpp"
 #include "types.hpp"
 
 namespace everest {
+class Response;
 
 namespace internals {
 class Connection;
@@ -20,6 +22,8 @@ class Connection;
  * Handles data appending to ease HTTP parsing.
  */
 struct Request {
+	friend class internals::Connection;
+
 
 	Request(const std::shared_ptr<internals::Connection>& connection);
 	~Request();
@@ -28,32 +32,36 @@ struct Request {
 	Request(Request&&) = delete;
 	Request& operator=(const Request&) = delete;
 
-	void setMethod(const unsigned int method);
+
+	// Access data
 	HTTPMethod getMethod();
-
-	void appendURL(const std::string& url);
 	const std::string& getURL();
-
-	void setHeader(const std::string& key, const std::string& value);
 	const std::string& getHeader(const std::string& key);
-
-	void appendBody(const std::string& chunk);
 	std::string getBody();
 
+	// Respond
+	std::shared_ptr<Response> createResponse();
 
 private:
-	typedef std::list<std::pair<std::string, std::string>> headers_t;
+
+	// Methods called only by the Connection, when parsing Request
+	void setMethod(const unsigned int method);
+	void appendURL(const std::string& url);
+	void setHeader(const std::string& key, const std::string& value);
+	void appendBody(const std::string& chunk);
+
+	// Helper method
 	headers_t::iterator findHeader(const std::string& key);
+
+	// Request's data
 	headers_t mHeaders;
-
 	HTTPMethod mMethod;
-
 	std::string mURL;
-
 	std::stringstream mBodyStream;
 
+	// Reference to the connection. Needed to create the Response object.
+	// We don't keep the Response here to allow deleting Response before Request.
 	std::shared_ptr<internals::Connection> mConnection;
-
 };
 
 } // namespace everest

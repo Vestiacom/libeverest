@@ -1,11 +1,13 @@
 #include <boost/test/unit_test.hpp>
 
-#include <string>
-#include "internals/acceptor.hpp"
-#include <iostream>
-
-#include <thread>
 #include "common.hpp"
+
+#include <string>
+#include <iostream>
+#include <thread>
+
+#include "internals/acceptor.hpp"
+
 
 BOOST_AUTO_TEST_SUITE(AcceptorTestSuite)
 

@@ -15,7 +15,6 @@ Request::~Request()
 {
 }
 
-
 void Request::setMethod(const unsigned int method)
 {
 	mMethod = static_cast<HTTPMethod>(method);
@@ -37,7 +36,7 @@ const std::string& Request::getURL()
 	return mURL;
 }
 
-Request::headers_t::iterator Request::findHeader(const std::string& key)
+headers_t::iterator Request::findHeader(const std::string& key)
 {
 	return std::find_if(mHeaders.begin(), mHeaders.end(), [&key](auto header) {
 		return header.first == key;
@@ -70,5 +69,11 @@ std::string Request::getBody()
 {
 	return mBodyStream.str();
 }
+
+std::shared_ptr<Response> Request::createResponse()
+{
+	return std::make_shared<Response>(mConnection);
+}
+
 
 } // namespace everest

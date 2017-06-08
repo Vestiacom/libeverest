@@ -3,6 +3,9 @@
 
 #include <string>
 
+// This is for testing purposes
+#define private public
+
 void runParallel(const std::string& command);
 
 #endif // TESTS_COMMON_HPPk
