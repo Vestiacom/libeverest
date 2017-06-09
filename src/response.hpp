@@ -8,6 +8,8 @@
 #include <memory>
 
 #include "internals/connection.hpp"
+#include "internals/common.hpp"
+
 #include "types.hpp"
 
 namespace everest {
@@ -20,7 +22,7 @@ class Connection;
  * Keeps all data of an outgoing HTTP response.
  * Handles data appending.
  */
-struct Response: std::enable_shared_from_this<Response> {
+struct EVEREST_API Response: std::enable_shared_from_this<Response> {
 
 	// TODO: Make constructor protected
 	Response(const std::shared_ptr<internals::Connection>& connection);

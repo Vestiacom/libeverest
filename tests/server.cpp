@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(POST)
 
 BOOST_AUTO_TEST_CASE(LoadTest)
 {
-	int maxConnections = 1;
+	int maxConnections = 10000;
 
 	int pid = fork();
 	BOOST_REQUIRE(pid != -1);
@@ -83,10 +83,10 @@ BOOST_AUTO_TEST_CASE(LoadTest)
 	if (pid == 0) {
 		sleep(1);
 		for (int i = 0; i < maxConnections; ++i) {
-			runParallel("wget -T 1 --tries=1 -v --post-data=\'" + TEST_BODY
+			runParallel("wget -T 1 --tries=1 -qO- --post-data=\'" + TEST_BODY
 			            + "\' --header=\'" + TEST_HEADER_KEY + ":" + TEST_HEADER_VALUE
 			            + "\' localhost:" + std::to_string(TEST_PORT)
-			            + TEST_URL);
+			            + TEST_URL + " &> /dev/null");
 		}
 
 		// Stop the
@@ -128,6 +128,7 @@ BOOST_AUTO_TEST_CASE(LoadTest)
 
 	BOOST_CHECK(isOK);
 	BOOST_CHECK_EQUAL(counter, maxConnections);
+	BOOST_CHECK_EQUAL(0, s.getConnectionsNumber());
 }
 
 

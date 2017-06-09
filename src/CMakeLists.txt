@@ -39,6 +39,7 @@ set_target_properties(${SHARED_TARGET} PROPERTIES
                       SOVERSION   ${_LIB_SOVERSION_}
                       VERSION     ${_LIB_VERSION_})
 
+target_compile_definitions(${SHARED_TARGET} PUBLIC "-DEVEREST_DLL")
 add_dependencies(${SHARED_TARGET} ${HTTPPARSER})
 
 target_link_libraries(${SHARED_TARGET} ${HTTPPARSER_LIBRARIES})

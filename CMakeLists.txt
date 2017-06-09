@@ -29,7 +29,7 @@ message(STATUS "-------------------------------------------------")
 include(FindPkgConfig)
 
 ## Build options ##############################################################
-set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_C_FLAGS_RELEASE} -std=c++17 -Os")
+set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_C_FLAGS_RELEASE} -std=c++17 -Os -fvisibility=hidden -fvisibility-inlines-hidden")
 set(CMAKE_CXX_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG}   -std=c++17 -O0 -ggdb")
 set(CMAKE_CXX_FLAGS_SANITIZE "${CMAKE_C_FLAGS_DEBUG}   -std=c++17 -O0 -ggdb -fsanitize=address -static-libasan -fno-omit-frame-pointer" )
 

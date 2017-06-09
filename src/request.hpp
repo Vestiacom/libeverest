@@ -9,6 +9,7 @@
 // #include "internals/connection.hpp"
 #include "response.hpp"
 #include "types.hpp"
+#include "internals/common.hpp"
 
 namespace everest {
 class Response;
@@ -21,7 +22,7 @@ class Connection;
  * Keeps all data of an incoming HTTP request.
  * Handles data appending to ease HTTP parsing.
  */
-struct Request {
+struct EVEREST_API Request {
 	friend class internals::Connection;
 
 
@@ -43,12 +44,11 @@ struct Request {
 	std::shared_ptr<Response> createResponse();
 
 private:
-
 	// Methods called only by the Connection, when parsing Request
-	void setMethod(const unsigned int method);
-	void appendURL(const std::string& url);
-	void setHeader(const std::string& key, const std::string& value);
-	void appendBody(const std::string& chunk);
+	EVEREST_LOCAL void setMethod(const unsigned int method);
+	EVEREST_LOCAL void appendURL(const std::string& url);
+	EVEREST_LOCAL void setHeader(const std::string& key, const std::string& value);
+	EVEREST_LOCAL void appendBody(const std::string& chunk);
 
 	// Helper method
 	headers_t::iterator findHeader(const std::string& key);

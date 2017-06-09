@@ -8,6 +8,8 @@
 
 #include "internals/acceptor.hpp"
 #include "internals/connection.hpp"
+#include "internals/common.hpp"
+
 #include "request.hpp"
 
 namespace everest {
@@ -18,7 +20,7 @@ class Request;
  * This is the entry point of the library.
  * Pass callbacks for particular endpoints.
  */
-struct Server {
+struct EVEREST_API Server {
 	typedef std::function<void(const std::shared_ptr<Request>&)> EndpointCallback;
 
 	Server(const unsigned short port, struct ev_loop* evLoop);
@@ -67,13 +69,13 @@ private:
 	internals::Acceptor mAcceptor;
 
 	// Called when new connection is established.
-	void onNewConnection(int fd);
+	EVEREST_LOCAL void onNewConnection(int fd);
 
 	// When connection is lost
-	void onConnectionLost(int fd);
+	EVEREST_LOCAL void onConnectionLost(int fd);
 
 	// New request arrived
-	void onNewRequest(const std::shared_ptr<Request>& r);
+	EVEREST_LOCAL void onNewRequest(const std::shared_ptr<Request>& r);
 };
 
 } // namespace everest
