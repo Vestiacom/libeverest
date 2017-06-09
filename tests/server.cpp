@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(LoadTest)
 	if (pid == 0) {
 		sleep(1);
 		for (int i = 0; i < maxConnections; ++i) {
-			runParallel("wget -T 1 --tries=1 -q --post-data=\'" + TEST_BODY
+			runParallel("wget -T 1 --tries=1 -v --post-data=\'" + TEST_BODY
 			            + "\' --header=\'" + TEST_HEADER_KEY + ":" + TEST_HEADER_VALUE
 			            + "\' localhost:" + std::to_string(TEST_PORT)
 			            + TEST_URL);
@@ -112,6 +112,10 @@ BOOST_AUTO_TEST_CASE(LoadTest)
 			ev_break(loop, EVBREAK_ALL);
 		}
 
+		auto response = r->createResponse();
+		response->setHeader("A", "B");
+		response->appendBody("Body");
+		response->send();
 	});
 
 	s.endpoint("/stop", [&](const std::shared_ptr<Request>&) {

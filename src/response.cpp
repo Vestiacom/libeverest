@@ -5,7 +5,8 @@
 namespace everest {
 
 Response::Response(const std::shared_ptr<internals::Connection>& connection)
-	: mConnection(connection)
+	: mStatus(200),
+	  mConnection(connection)
 {
 
 }
@@ -66,10 +67,10 @@ std::string Response::getBody()
 void Response::send()
 {
 	// Set Content-Length header
-	mBodyStream.seekg(0, ios::end);
-	ssize_t size = oss.tellg();
+	mBodyStream.seekg(0, mBodyStream.end);
+	ssize_t size = mBodyStream.tellg();
 	setHeader("Content-Length", std::to_string(size));
-	oss.seekg(0, ios::beg);
+	mBodyStream.seekg(0, mBodyStream.beg);
 
 	// Connection will handle sending data.
 	// Just pass "self" to be send.

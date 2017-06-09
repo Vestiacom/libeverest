@@ -55,7 +55,8 @@ void Server::onNewConnection(int fd)
 	// Acceptor accepted a new connection
 	auto connection = std::make_shared<internals::Connection>(fd,
 	                                                          mEvLoop,
-	                                                          std::bind(&Server::onNewRequest, this, _1));
+	                                                          std::bind(&Server::onNewRequest, this, _1),
+	                                                          std::bind(&Server::onConnectionLost, this, _1));
 	connection->start();
 	mConnections[fd] = connection;
 }
@@ -64,11 +65,20 @@ void Server::onNewRequest(const std::shared_ptr<Request>& r)
 {
 	try {
 		mEndpointCallbacks[r->getURL()](r);
-	} catch(const std::out_of_range&) {
+	} catch (const std::out_of_range&) {
 		// No callback for this URL
 	}
 }
 
+void Server::onConnectionLost(int fd)
+{
+	mConnections.erase(fd);
+}
+
+std::size_t Server::getConnectionsNumber()
+{
+	return mConnections.size();
+}
 
 
 } // namespace everest

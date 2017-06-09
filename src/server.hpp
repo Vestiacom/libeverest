@@ -48,6 +48,11 @@ struct Server {
 	 */
 	void endpoint(const std::string& url, const EndpointCallback& endpointCallback);
 
+	/**
+	 * @return number of opened connections
+	 */
+	std::size_t getConnectionsNumber();
+
 private:
 	// A list of all active connections
 	std::unordered_map<int, std::shared_ptr<internals::Connection>> mConnections;
@@ -64,12 +69,11 @@ private:
 	// Called when new connection is established.
 	void onNewConnection(int fd);
 
-	// When connection lost
-	void onConectionLost(int fd);
+	// When connection is lost
+	void onConnectionLost(int fd);
 
 	// New request arrived
 	void onNewRequest(const std::shared_ptr<Request>& r);
-
 };
 
 } // namespace everest

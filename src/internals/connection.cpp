@@ -8,7 +8,7 @@
 #include <cstring>
 
 // #include <sys/types.h>
-// #include <sys/socket.h>
+#include <sys/socket.h>
 
 // TODO: Reomove
 #include <iostream>
@@ -32,13 +32,15 @@ namespace internals {
 
 Connection::Connection(int fd,
                        struct ev_loop* evLoop,
-                       const InputDataCallback& inputDataCallback)
+                       const InputDataCallback& inputDataCallback,
+                       const ConnectionLostCallback& connectionLostCallback)
 	: mInputWatcher(evLoop),
 	  mOutputWatcher(evLoop),
 	  mFD(fd),
 	  mParser(new ::http_parser),
 	  mParserSettings(),
 	  mInputDataCallback(inputDataCallback),
+	  mConnectionLostCallback(connectionLostCallback),
 	  mIsParsingHeaderKey(false),
 	  mLastHeaderKey(""),
 	  mLastHeaderValue("")
@@ -60,10 +62,7 @@ Connection::Connection(int fd,
 
 Connection::~Connection()
 {
-	mInputWatcher.stop();
-	mOutputWatcher.stop();
-
-	::close(mFD);
+	shutdown();
 }
 
 void Connection::setupHttpProxy()
@@ -95,12 +94,25 @@ void Connection::stop()
 	mOutputWatcher.stop();
 }
 
+void Connection::shutdown()
+{
+	// No communication with the socket is possible after shutdown
+	stop();
+
+	::shutdown(mFD, SHUT_RDWR);
+	::close(mFD);
+
+	if (mConnectionLostCallback) {
+		mConnectionLostCallback(mFD);
+	}
+}
+
 void Connection::onInput(ev::io& w, int revents)
 {
 	if (EV_ERROR & revents) {
 		// Unspecified error
 		std::ostringstream msg;
-		msg << "Error when reading the Connection's socket:" <<  std::strerror(errno);
+		msg << "Unspecified error in input callback:" <<  std::strerror(errno);
 		throw std::runtime_error(msg.str());
 	}
 
@@ -110,6 +122,12 @@ void Connection::onInput(ev::io& w, int revents)
 
 	ssize_t recved = ::read(w.fd, buf, len);
 	if (recved < 0) {
+		if (errno == ECONNRESET) {
+			// Connection reset by peer.
+			shutdown();
+			return;
+		}
+
 		// TODO: Test throwing in libev watcherresponse.getStatus()
 		std::ostringstream msg;
 		msg << "Error when reading the Connection's socket:" <<  std::strerror(errno);
@@ -125,6 +143,9 @@ void Connection::onInput(ev::io& w, int revents)
 
 void Connection::fillBuffer()
 {
+	cout << "fillBuffer" << endl;
+
+
 	auto& response = *mResponses.front();
 
 	// Status line ------------------------------------------------------------
@@ -151,7 +172,7 @@ void Connection::fillBuffer()
 	// Connection: close
 
 	const auto& headers = response.getHeaders();
-	for (const auto & header; headers) {
+	for (const auto& header : headers) {
 		std::copy(header.first.begin(), header.first.end(), std::back_inserter(mOutputBuffer));
 		mOutputBuffer.push_back(':');
 		std::copy(header.second.begin(), header.second.end(), std::back_inserter(mOutputBuffer));
@@ -162,13 +183,22 @@ void Connection::fillBuffer()
 
 	// Body -------------------------------------------------------------------
 	// Body is already URL encoded
-	std::copy(data.begin(), data.end(), std::back_inserter(mOutputBuffer));
+	std::string body = response.getBody();
+	std::copy(body.begin(), body.end(), std::back_inserter(mOutputBuffer));
 
 	mResponses.pop();
+
+
+	// for (auto c : mOutputBuffer) {
+	// 	cout << c;
+	// }
+	// cout << endl;
 }
 
 void Connection::onOutput(ev::io& w, int revents)
 {
+	cout << "onOutput" << endl;
+
 	if (EV_ERROR & revents) {
 		// Unspecified error
 		std::ostringstream msg;
@@ -181,8 +211,10 @@ void Connection::onOutput(ev::io& w, int revents)
 	// Ensure output buffer has any data to send
 	if (mOutputBufferPosition >= mOutputBuffer.size()) {
 		// No data to send in mOutputBuffer.
+		cout << "No data to send in mOutputBuffer." << endl;
 
 		if (mResponses.empty()) {
+			cout << "Stopping output" << endl;
 			// And there's no more responses to send.
 			// Pause sending and free the buffer.
 			mOutputBufferPosition = 0;
@@ -200,11 +232,17 @@ void Connection::onOutput(ev::io& w, int revents)
 	ssize_t n  = ::write(w.fd,
 	                     &mOutputBuffer[mOutputBufferPosition],
 	                     mOutputBuffer.size() - mOutputBufferPosition);
+	cout << "n: " << std::to_string(n) << endl;
 	if (n >= 0) {
 		mOutputBufferPosition += n;
 	} else if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
 		// Neglected errors
 	} else {
+		if (errno == ECONNRESET) {
+			// Connection reset by peer.
+			shutdown();
+			return;
+		}
 		std::ostringstream msg;
 		msg << "write() failed with: " <<  std::strerror(errno);
 		throw std::runtime_error(msg.str());
@@ -213,6 +251,7 @@ void Connection::onOutput(ev::io& w, int revents)
 
 void Connection::send(const std::shared_ptr<Response>& response)
 {
+	cout << "send" << endl;
 
 	// 	std::string str = "hello";
 	// std::vector<char> data = /* ... */;

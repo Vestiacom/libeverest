@@ -40,7 +40,7 @@ struct Response: std::enable_shared_from_this<Response> {
 	void appendBody(const std::string& chunk);
 	std::string getBody();
 
-
+	void send();
 private:
 	headers_t::iterator findHeader(const std::string& key);
 	headers_t mHeaders;
