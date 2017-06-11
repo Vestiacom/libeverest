@@ -83,7 +83,7 @@ void Receiver::shutdown()
 
 	// No communication with the socket is possible after shutdown
 	stop();
-	::shutdown(mFD, SHUT_RD);
+	::shutdown(mFD, ::SHUT_RD);
 	mFD = -1;
 
 	mLastHeaderKey.clear();

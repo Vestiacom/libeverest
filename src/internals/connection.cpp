@@ -4,8 +4,6 @@
 #include <map>
 #include <ev++.h>
 #include <unistd.h>
-// #include <cerrno>
-// #include <cstring>
 
 // TODO: Reomove
 #include <iostream>

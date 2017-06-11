@@ -69,7 +69,8 @@ void Sender::shutdown()
 
 	// No communication with the socket is possible after shutdown
 	stop();
-	::shutdown(mFD, SHUT_WR);
+
+	::shutdown(mFD, ::SHUT_WR);
 	mFD = -1;
 
 	while (!mResponses.empty()) {
