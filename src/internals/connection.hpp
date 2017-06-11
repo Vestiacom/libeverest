@@ -2,6 +2,7 @@
 #define EVEREST_INTERNALS_CONNECTION_HPP_
 
 #include "receiver.hpp"
+#include "sender.hpp"
 #include "../request.hpp"
 
 #include <queue>
@@ -9,16 +10,15 @@
 #include <functional>
 #include <memory>
 #include <ev++.h>
-#include <http_parser.h>
 
 namespace everest {
 
 class Request;
-class Response;
 
 namespace internals {
 
 class Receiver;
+class Sender;
 
 /**
  * Wraps together all data used by one connection and HTTP parsing for this connection.
@@ -72,31 +72,15 @@ private:
 	// Handles receiving data and parsing HTTP requests
 	Receiver mReceiver;
 
-	// Pop the oldest Response and serialize it to the output buffer
-	void fillBuffer();
+	// Handles sending HTTP responses
+	Sender mSender;
 
 	// Shutdowns the connection (calls ConnectionLostCallback)
 	void shutdown();
 
-	// Socket ready to receive data
-	void onOutput(ev::io& w, int revents);
-
-	// Waits when OS is ready to receive data do send
-	ev::io mOutputWatcher;
-
 	// Socket's fd
 	int mFD;
 
-	// When Response is send it serializes into a buffer and gets stored here.
-	// Responses are send in order, one by one, in the onOutput callback.
-	std::queue<std::shared_ptr<Response>> mResponses;
-
-	// Buffer with the latest response to send
-	std::vector<char> mOutputBuffer;
-
-	// Position in the latest buffer.
-	// Some data might have been send - this is the position of the unsent data.
-	std::size_t mOutputBufferPosition;
 };
 
 } // namespace internals
