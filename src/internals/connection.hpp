@@ -30,12 +30,10 @@ namespace internals {
  */
 struct Connection: std::enable_shared_from_this<Connection> {
 	typedef std::function<void(const std::shared_ptr<Request>& request)> InputDataCallback;
-	typedef std::function<void(int fd)> ConnectionLostCallback;
 
 	Connection(int fd,
 	           struct ev_loop* evLoop,
-	           const InputDataCallback& inputDataCallback,
-	           const ConnectionLostCallback& connectionLostCallback = nullptr);
+	           const InputDataCallback& inputDataCallback);
 	~Connection();
 
 	Connection(const Connection&) = delete;
@@ -57,6 +55,16 @@ struct Connection: std::enable_shared_from_this<Connection> {
 	 * Will not block.
 	 */
 	void send(const std::shared_ptr<Response>& bufferPtr);
+
+	/**
+	 * @return underlying socket's fd
+	 */
+	int getFD();
+
+	/**
+	 * @return is this connection closed
+	 */
+	bool isClosed();
 
 private:
 
@@ -92,7 +100,7 @@ private:
 
 	// Shutdowns the connection (calls ConnectionLostCallback)
 	void shutdown();
-	
+
 	// New data on socket
 	void onInput(ev::io& w, int revents);
 
@@ -119,10 +127,6 @@ private:
 
 	// Called when a valid request is ready
 	InputDataCallback mInputDataCallback;
-
-	// Called when the connection is lost
-	// For example peer reset the connection
-	ConnectionLostCallback mConnectionLostCallback;
 
 	// Helper variable for parsing http headers.
 	// Last parsed http position was "key". Header is (key:value).

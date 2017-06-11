@@ -24,58 +24,58 @@ const std::string TEST_HEADER_VALUE = "B";
 // 	BOOST_CHECK_THROW(Acceptor a(TEST_PORT, nullptr, [](int) {}), std::runtime_error);
 // }
 
-BOOST_AUTO_TEST_CASE(GET)
-{
-	bool isOK = false;
+// BOOST_AUTO_TEST_CASE(GET)
+// {
+// 	bool isOK = false;
 
-	struct ev_loop* loop = EV_DEFAULT;
+// 	struct ev_loop* loop = EV_DEFAULT;
 
-	Server s(TEST_PORT, loop);
-	s.endpoint(TEST_URL, [&](const std::shared_ptr<Request>& r) {
-		isOK = r->getURL() == TEST_URL
-		       && r->getHeader(TEST_HEADER_KEY) == TEST_HEADER_VALUE;
-		ev_break(loop, EVBREAK_ALL);
-	});
-	s.start();
+// 	Server s(TEST_PORT, loop);
+// 	s.endpoint(TEST_URL, [&](const std::shared_ptr<Request>& r) {
+// 		isOK = r->getURL() == TEST_URL
+// 		       && r->getHeader(TEST_HEADER_KEY) == TEST_HEADER_VALUE;
+// 		ev_break(loop, EVBREAK_ALL);
+// 	});
+// 	s.start();
 
-	runParallel("wget -T 1 --tries=1 -q --header=\'" + TEST_HEADER_KEY + ":" + TEST_HEADER_VALUE
-	            + "\' localhost:" + std::to_string(TEST_PORT)
-	            + TEST_URL);
+// 	runParallel("wget -T 1 --tries=1 -q --header=\'" + TEST_HEADER_KEY + ":" + TEST_HEADER_VALUE
+// 	            + "\' localhost:" + std::to_string(TEST_PORT)
+// 	            + TEST_URL);
 
-	ev_run(loop, 0);
+// 	ev_run(loop, 0);
 
-	BOOST_CHECK(isOK);
-}
+// 	BOOST_CHECK(isOK);
+// }
 
-BOOST_AUTO_TEST_CASE(POST)
-{
-	bool isOK = false;
+// BOOST_AUTO_TEST_CASE(POST)
+// {
+// 	bool isOK = false;
 
-	struct ev_loop* loop = EV_DEFAULT;
+// 	struct ev_loop* loop = EV_DEFAULT;
 
-	Server s(TEST_PORT, loop);
-	s.endpoint(TEST_URL, [&](const std::shared_ptr<Request>& r) {
-		isOK = r->getURL() == TEST_URL
-		       && r->getHeader(TEST_HEADER_KEY) == TEST_HEADER_VALUE
-		       && r->getBody() == TEST_BODY;
-		ev_break(loop, EVBREAK_ALL);
-	});
-	s.start();
+// 	Server s(TEST_PORT, loop);
+// 	s.endpoint(TEST_URL, [&](const std::shared_ptr<Request>& r) {
+// 		isOK = r->getURL() == TEST_URL
+// 		       && r->getHeader(TEST_HEADER_KEY) == TEST_HEADER_VALUE
+// 		       && r->getBody() == TEST_BODY;
+// 		ev_break(loop, EVBREAK_ALL);
+// 	});
+// 	s.start();
 
-	runParallel("wget -T 1 --tries=1 -q --post-data=\'" + TEST_BODY
-	            + "\' --header=\'" + TEST_HEADER_KEY + ":" + TEST_HEADER_VALUE
-	            + "\' localhost:" + std::to_string(TEST_PORT)
-	            + TEST_URL);
+// 	runParallel("wget -T 1 --tries=1 -q --post-data=\'" + TEST_BODY
+// 	            + "\' --header=\'" + TEST_HEADER_KEY + ":" + TEST_HEADER_VALUE
+// 	            + "\' localhost:" + std::to_string(TEST_PORT)
+// 	            + TEST_URL);
 
-	ev_run(loop, 0);
+// 	ev_run(loop, 0);
 
-	BOOST_CHECK(isOK);
-}
+// 	BOOST_CHECK(isOK);
+// }
 
 
 BOOST_AUTO_TEST_CASE(LoadTest)
 {
-	int maxConnections = 10000;
+	int maxConnections = 100000;
 
 	int pid = fork();
 	BOOST_REQUIRE(pid != -1);
@@ -87,7 +87,10 @@ BOOST_AUTO_TEST_CASE(LoadTest)
 			            + "\' --header=\'" + TEST_HEADER_KEY + ":" + TEST_HEADER_VALUE
 			            + "\' localhost:" + std::to_string(TEST_PORT)
 			            + TEST_URL + " &> /dev/null");
+			usleep(10);
 		}
+
+		sleep(1);
 
 		// Stop the
 		runParallel("wget -T 1 --tries=1 -q localhost:" + std::to_string(TEST_PORT) + "/stop");
@@ -114,17 +117,20 @@ BOOST_AUTO_TEST_CASE(LoadTest)
 
 		auto response = r->createResponse();
 		response->setHeader("A", "B");
-		response->appendBody("Body");
+		// response->appendBody("B00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
 		response->send();
 	});
 
 	s.endpoint("/stop", [&](const std::shared_ptr<Request>&) {
+		s.stop();
 		ev_break(loop, EVBREAK_ALL);
 	});
 
 	s.start();
 
 	ev_run(loop, 0);
+
+	// s.stop();
 
 	BOOST_CHECK(isOK);
 	BOOST_CHECK_EQUAL(counter, maxConnections);

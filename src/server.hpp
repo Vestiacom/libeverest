@@ -4,6 +4,7 @@
 
 #include <ev++.h>
 #include <functional>
+#include <vector>
 #include <unordered_map>
 
 #include "internals/acceptor.hpp"
@@ -23,7 +24,9 @@ class Request;
 struct EVEREST_API Server {
 	typedef std::function<void(const std::shared_ptr<Request>&)> EndpointCallback;
 
-	Server(const unsigned short port, struct ev_loop* evLoop);
+	Server(const unsigned short port,
+	       struct ev_loop* evLoop,
+	       const size_t maxConnections = 1000);
 	~Server();
 
 	Server(const Server&) = delete;
@@ -57,7 +60,7 @@ struct EVEREST_API Server {
 
 private:
 	// A list of all active connections
-	std::unordered_map<int, std::shared_ptr<internals::Connection>> mConnections;
+	std::vector<std::shared_ptr<internals::Connection>> mConnections;
 
 	// Endpoints connected to the
 	std::unordered_map<std::string, EndpointCallback> mEndpointCallbacks;
@@ -65,17 +68,26 @@ private:
 	// Event loop
 	struct ev_loop* mEvLoop;
 
+	// Max number of concurrent connections
+	size_t mMaxConnections;
+
+	// For periodical cleanups
+	ev::timer mCleanupTimer;
+
 	// Handles incoming connections
 	internals::Acceptor mAcceptor;
 
 	// Called when new connection is established.
 	EVEREST_LOCAL void onNewConnection(int fd);
 
-	// When connection is lost
-	EVEREST_LOCAL void onConnectionLost(int fd);
-
 	// New request arrived
 	EVEREST_LOCAL void onNewRequest(const std::shared_ptr<Request>& r);
+
+	// Called periodically to cleanup dead connections.
+	EVEREST_LOCAL void onCleanupTimeout(ev::timer& w, int revents);
+
+	// Cleans up references to the unneeded Connection objects
+	EVEREST_LOCAL void removeDisconnected();
 };
 
 } // namespace everest

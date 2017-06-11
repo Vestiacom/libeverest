@@ -32,15 +32,13 @@ namespace internals {
 
 Connection::Connection(int fd,
                        struct ev_loop* evLoop,
-                       const InputDataCallback& inputDataCallback,
-                       const ConnectionLostCallback& connectionLostCallback)
+                       const InputDataCallback& inputDataCallback)
 	: mInputWatcher(evLoop),
 	  mOutputWatcher(evLoop),
 	  mFD(fd),
 	  mParser(new ::http_parser),
 	  mParserSettings(),
 	  mInputDataCallback(inputDataCallback),
-	  mConnectionLostCallback(connectionLostCallback),
 	  mIsParsingHeaderKey(false),
 	  mLastHeaderKey(""),
 	  mLastHeaderValue("")
@@ -94,17 +92,41 @@ void Connection::stop()
 	mOutputWatcher.stop();
 }
 
+int Connection::getFD()
+{
+	return mFD;
+}
+
 void Connection::shutdown()
 {
+	if (mFD < 0) {
+		return;
+	}
+
 	// No communication with the socket is possible after shutdown
-	stop();
 
 	::shutdown(mFD, SHUT_RDWR);
 	::close(mFD);
+	mFD = -1;
+	cout << "shutdown" << endl;
+	stop();
 
-	if (mConnectionLostCallback) {
-		mConnectionLostCallback(mFD);
+	while (!mResponses.empty()) {
+		mResponses.pop();
 	}
+
+	mOutputBuffer.clear();
+	mOutputBuffer.shrink_to_fit();
+
+	mLastHeaderKey.clear();
+	mLastHeaderValue.clear();
+	mParser.reset();
+	mRequest.reset();
+}
+
+bool Connection::isClosed()
+{
+	return mFD == -1;
 }
 
 void Connection::onInput(ev::io& w, int revents)
@@ -139,13 +161,14 @@ void Connection::onInput(ev::io& w, int revents)
 	if (nparsed != recved) {
 		throw std::runtime_error("Http parser error");
 	}
+
+	if (recved == 0) {
+		shutdown();
+	}
 }
 
 void Connection::fillBuffer()
 {
-	cout << "fillBuffer" << endl;
-
-
 	auto& response = *mResponses.front();
 
 	// Status line ------------------------------------------------------------
@@ -197,8 +220,6 @@ void Connection::fillBuffer()
 
 void Connection::onOutput(ev::io& w, int revents)
 {
-	cout << "onOutput" << endl;
-
 	if (EV_ERROR & revents) {
 		// Unspecified error
 		std::ostringstream msg;
@@ -211,10 +232,8 @@ void Connection::onOutput(ev::io& w, int revents)
 	// Ensure output buffer has any data to send
 	if (mOutputBufferPosition >= mOutputBuffer.size()) {
 		// No data to send in mOutputBuffer.
-		cout << "No data to send in mOutputBuffer." << endl;
 
 		if (mResponses.empty()) {
-			cout << "Stopping output" << endl;
 			// And there's no more responses to send.
 			// Pause sending and free the buffer.
 			mOutputBufferPosition = 0;
@@ -232,7 +251,6 @@ void Connection::onOutput(ev::io& w, int revents)
 	ssize_t n  = ::write(w.fd,
 	                     &mOutputBuffer[mOutputBufferPosition],
 	                     mOutputBuffer.size() - mOutputBufferPosition);
-	cout << "n: " << std::to_string(n) << endl;
 	if (n >= 0) {
 		mOutputBufferPosition += n;
 	} else if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
@@ -247,16 +265,14 @@ void Connection::onOutput(ev::io& w, int revents)
 		msg << "write() failed with: " <<  std::strerror(errno);
 		throw std::runtime_error(msg.str());
 	}
+
+	if (n == 0) {
+		shutdown();
+	}
 }
 
 void Connection::send(const std::shared_ptr<Response>& response)
 {
-	cout << "send" << endl;
-
-	// 	std::string str = "hello";
-	// std::vector<char> data = /* ... */;
-	//
-
 	mResponses.push(response);
 
 	// Ensure sending data is switched on
@@ -276,8 +292,6 @@ void Connection::resetRequest()
 
 int Connection::onMessageBegin(::http_parser* parser)
 {
-	cout << "onMessageBegin" << endl;
-
 	try {
 		Connection& conn = *static_cast<Connection*>(parser->data);
 		conn.resetRequest();
@@ -292,7 +306,6 @@ int Connection::onMessageBegin(::http_parser* parser)
 
 int Connection::onMessageComplete(::http_parser* parser)
 {
-	cout << "onMessageComplete" << endl;
 	try {
 		Connection& conn = *static_cast<Connection*>(parser->data);
 		if (conn.mInputDataCallback) {
@@ -309,7 +322,6 @@ int Connection::onMessageComplete(::http_parser* parser)
 
 int Connection::onURL(::http_parser* parser, const char* at, size_t length)
 {
-	cout << "onURL" << endl;
 	try {
 		Connection& conn = *static_cast<Connection*>(parser->data);
 
@@ -326,7 +338,6 @@ int Connection::onURL(::http_parser* parser, const char* at, size_t length)
 
 int Connection::onHeaderField(::http_parser* parser, const char* at, size_t length)
 {
-	cout << "onHeaderField" << endl;
 	try {
 		Connection& conn = *static_cast<Connection*>(parser->data);
 
@@ -360,7 +371,6 @@ int Connection::onHeaderField(::http_parser* parser, const char* at, size_t leng
 
 int Connection::onHeaderValue(::http_parser* parser, const char* at, size_t length)
 {
-	cout << "onHeaderValue" << endl;
 	try {
 		Connection& conn = *static_cast<Connection*>(parser->data);
 		if (conn.mIsParsingHeaderKey) {
@@ -387,7 +397,6 @@ int Connection::onHeaderValue(::http_parser* parser, const char* at, size_t leng
 
 int Connection::onHeadersComplete(::http_parser* parser)
 {
-	cout << "onHeadersComplete" << endl;
 	try {
 
 		Connection& conn = *static_cast<Connection*>(parser->data);
@@ -411,7 +420,6 @@ int Connection::onHeadersComplete(::http_parser* parser)
 
 int Connection::onBody(::http_parser* parser, const char* at, size_t length)
 {
-	cout << "onBody" << endl;
 	try {
 		Connection& conn = *static_cast<Connection*>(parser->data);
 		conn.mRequest->appendBody(std::string(at, length));

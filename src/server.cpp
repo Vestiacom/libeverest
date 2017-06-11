@@ -2,9 +2,11 @@
 
 #include <stdexcept>
 #include <string>
+#include <algorithm>
 #include <sstream>
 #include <cerrno>
 #include <cstring>
+#include <unistd.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -19,30 +21,31 @@ using namespace std;
 
 namespace everest {
 
-Server::Server(const unsigned short port, struct ev_loop* evLoop)
+Server::Server(const unsigned short port, struct ev_loop* evLoop, const size_t maxConnections)
 	: mEvLoop(evLoop),
+	  mMaxConnections(maxConnections),
+	  mCleanupTimer(evLoop),
 	  mAcceptor(port, evLoop, std::bind(&Server::onNewConnection, this, _1))
 {
-
+	mCleanupTimer.set<Server, &Server::onCleanupTimeout>(this);
 }
 
 Server::~Server()
 {
 	stop();
-
 }
 
 void Server::start()
 {
 	mAcceptor.start();
+	mCleanupTimer.start(0.25/*after in seconds*/, 0.25 /*period in seconds*/);
 }
 
 void Server::stop()
 {
+	mCleanupTimer.stop();
 	mAcceptor.stop();
-	for (auto& connection : mConnections) {
-		connection.second->stop();
-	}
+	mConnections.clear();
 }
 
 void Server::endpoint(const std::string& url, const EndpointCallback& endpointCallback)
@@ -52,13 +55,20 @@ void Server::endpoint(const std::string& url, const EndpointCallback& endpointCa
 
 void Server::onNewConnection(int fd)
 {
+	if (mConnections.size() > mMaxConnections) {
+		// Stop accepting more connections
+		mAcceptor.stop();
+		removeDisconnected();
+	}
+
 	// Acceptor accepted a new connection
 	auto connection = std::make_shared<internals::Connection>(fd,
 	                                                          mEvLoop,
-	                                                          std::bind(&Server::onNewRequest, this, _1),
-	                                                          std::bind(&Server::onConnectionLost, this, _1));
+	                                                          std::bind(&Server::onNewRequest, this, _1));
 	connection->start();
-	mConnections[fd] = connection;
+	mConnections.push_back(connection);
+
+	cout << getConnectionsNumber() << endl;
 }
 
 void Server::onNewRequest(const std::shared_ptr<Request>& r)
@@ -67,12 +77,37 @@ void Server::onNewRequest(const std::shared_ptr<Request>& r)
 		mEndpointCallbacks[r->getURL()](r);
 	} catch (const std::out_of_range&) {
 		// No callback for this URL
+		// auto resp = r.createResponse();
+		// resp->setStatus(404);
+		// resp->send();
 	}
 }
 
-void Server::onConnectionLost(int fd)
+void Server::removeDisconnected()
 {
-	mConnections.erase(fd);
+	mConnections.erase(std::remove_if(mConnections.begin(),
+	                                  mConnections.end(),
+	[this](const std::shared_ptr<internals::Connection> c) {
+		if (!c) {
+			return true;
+		}
+		return c->isClosed();
+	}), mConnections.end());
+
+	if (mConnections.size() > mMaxConnections) {
+		// Stop accepting more connections
+		mAcceptor.stop();
+	} else {
+		mAcceptor.start();
+	}
+}
+
+void Server::onCleanupTimeout(ev::timer&, int)
+{
+	cout << "----------------------" << endl;
+	cout << mConnections.size() << endl;
+	removeDisconnected();
+	mConnections.shrink_to_fit();
 }
 
 std::size_t Server::getConnectionsNumber()
