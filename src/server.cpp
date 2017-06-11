@@ -94,12 +94,8 @@ void Server::removeDisconnected()
 		return c->isClosed();
 	}), mConnections.end());
 
-	if (mConnections.size() > mMaxConnections) {
-		// Stop accepting more connections
-		mAcceptor.stop();
-	} else {
-		mAcceptor.start();
-	}
+	// Stop or resume accepting more connections
+	mConnections.size() > mMaxConnections ? mAcceptor.stop() : mAcceptor.start();
 }
 
 void Server::onCleanupTimeout(ev::timer&, int)

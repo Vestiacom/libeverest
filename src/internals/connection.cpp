@@ -33,15 +33,9 @@ namespace internals {
 Connection::Connection(int fd,
                        struct ev_loop* evLoop,
                        const InputDataCallback& inputDataCallback)
-	: mInputWatcher(evLoop),
+	: mReceiver(fd, evLoop, *this, inputDataCallback),
 	  mOutputWatcher(evLoop),
-	  mFD(fd),
-	  mParser(new ::http_parser),
-	  mParserSettings(),
-	  mInputDataCallback(inputDataCallback),
-	  mIsParsingHeaderKey(false),
-	  mLastHeaderKey(""),
-	  mLastHeaderValue("")
+	  mFD(fd)
 {
 	if (!evLoop) {
 		throw std::runtime_error("ev_loop is null");
@@ -51,36 +45,18 @@ Connection::Connection(int fd,
 		throw std::runtime_error("bad fd");
 	}
 
-	mInputWatcher.set<Connection, &Connection::onInput>(this);
 	mOutputWatcher.set<Connection, &Connection::onOutput>(this);
 
-	setupHttpProxy();
 }
-
 
 Connection::~Connection()
 {
 	shutdown();
 }
 
-void Connection::setupHttpProxy()
-{
-	mParserSettings.on_url = Connection::onURL;
-	mParserSettings.on_header_field = Connection::onHeaderField;
-	mParserSettings.on_header_value = Connection::onHeaderValue;
-	mParserSettings.on_body = Connection::onBody;
-	mParserSettings.on_message_begin = Connection::onMessageBegin;
-	mParserSettings.on_headers_complete = Connection::onHeadersComplete;
-	mParserSettings.on_message_complete = Connection::onMessageComplete;
-
-	::http_parser_init(mParser.get(), HTTP_REQUEST);
-	mParser->data = this;
-}
-
 void Connection::start()
 {
-	mInputWatcher.start(mFD, ev::READ);
-
+	mReceiver.start();
 	if (!mResponses.empty()) {
 		mOutputWatcher.start(mFD, ev::WRITE);
 	}
@@ -88,7 +64,7 @@ void Connection::start()
 
 void Connection::stop()
 {
-	mInputWatcher.stop();
+	mReceiver.stop();
 	mOutputWatcher.stop();
 }
 
@@ -105,6 +81,8 @@ void Connection::shutdown()
 
 	// No communication with the socket is possible after shutdown
 
+	mReceiver.shutdown();
+
 	::shutdown(mFD, SHUT_RDWR);
 	::close(mFD);
 	mFD = -1;
@@ -117,58 +95,16 @@ void Connection::shutdown()
 
 	mOutputBuffer.clear();
 	mOutputBuffer.shrink_to_fit();
-
-	mLastHeaderKey.clear();
-	mLastHeaderValue.clear();
-	mParser.reset();
-	mRequest.reset();
 }
 
 bool Connection::isClosed()
 {
-	return mFD == -1;
-}
-
-void Connection::onInput(ev::io& w, int revents)
-{
-	if (EV_ERROR & revents) {
-		// Unspecified error
-		std::ostringstream msg;
-		msg << "Unspecified error in input callback:" <<  std::strerror(errno);
-		throw std::runtime_error(msg.str());
-	}
-
-	// Make this configurable
-	ssize_t len = 512;
-	char buf[len];
-
-	ssize_t recved = ::read(w.fd, buf, len);
-	if (recved < 0) {
-		if (errno == ECONNRESET) {
-			// Connection reset by peer.
-			shutdown();
-			return;
-		}
-
-		// TODO: Test throwing in libev watcherresponse.getStatus()
-		std::ostringstream msg;
-		msg << "Error when reading the Connection's socket:" <<  std::strerror(errno);
-		throw std::runtime_error(msg.str());
-	}
-
-	// Start / continue parsing. We pass recved==0 to signal that EOF has been received
-	ssize_t nparsed = http_parser_execute(mParser.get(), &mParserSettings, buf, recved);
-	if (nparsed != recved) {
-		throw std::runtime_error("Http parser error");
-	}
-
-	if (recved == 0) {
-		shutdown();
-	}
+	return mReceiver.isClosed() || mFD == -1;
 }
 
 void Connection::fillBuffer()
 {
+	cout << "fillBuffer" << endl;
 	auto& response = *mResponses.front();
 
 	// Status line ------------------------------------------------------------
@@ -220,6 +156,8 @@ void Connection::fillBuffer()
 
 void Connection::onOutput(ev::io& w, int revents)
 {
+	cout << "onOutput" << endl;
+
 	if (EV_ERROR & revents) {
 		// Unspecified error
 		std::ostringstream msg;
@@ -279,159 +217,5 @@ void Connection::send(const std::shared_ptr<Response>& response)
 	mOutputWatcher.start(mFD, ev::WRITE);
 }
 
-void Connection::resetRequest()
-{
-	try {
-		mRequest = std::make_shared<Request>(shared_from_this());
-	} catch (std::bad_weak_ptr& e) {
-		// Pathological situation - Connection isn't owned by by shared_ptr.
-		// This exception is thrown since in C++17
-		mRequest = std::make_shared<Request>(nullptr);
-	}
-}
-
-int Connection::onMessageBegin(::http_parser* parser)
-{
-	try {
-		Connection& conn = *static_cast<Connection*>(parser->data);
-		conn.resetRequest();
-
-		// Continue parsing
-		return 0;
-	} catch (const std::exception&) {
-		// Stop parsing the request
-		return -1;
-	}
-}
-
-int Connection::onMessageComplete(::http_parser* parser)
-{
-	try {
-		Connection& conn = *static_cast<Connection*>(parser->data);
-		if (conn.mInputDataCallback) {
-			conn.mInputDataCallback(conn.mRequest);
-		}
-
-		// Continue parsing
-		return 0;
-	} catch (const std::exception&) {
-		// Stop parsing the request
-		return -1;
-	}
-}
-
-int Connection::onURL(::http_parser* parser, const char* at, size_t length)
-{
-	try {
-		Connection& conn = *static_cast<Connection*>(parser->data);
-
-		std::string url(at, length);
-		conn.mRequest->appendURL(url);
-
-		// Continue parsing
-		return 0;
-	} catch (const std::exception&) {
-		// Stop parsing the request
-		return -1;
-	}
-}
-
-int Connection::onHeaderField(::http_parser* parser, const char* at, size_t length)
-{
-	try {
-		Connection& conn = *static_cast<Connection*>(parser->data);
-
-		if (!conn.mIsParsingHeaderKey) {
-			// Beginning of a new key
-
-			if (!conn.mLastHeaderKey.empty() && !conn.mLastHeaderValue.empty()) {
-				// This isn't the first key:value pair.
-				// Add the previous header to the request.
-				conn.mRequest->setHeader(conn.mLastHeaderKey, conn.mLastHeaderValue);
-			}
-
-			// Set string length to 0.
-			// Doesn't release the memory so we won't have to allocate again.
-			conn.mLastHeaderKey.clear();
-
-			// Just started receiving key
-			conn.mIsParsingHeaderKey = true;
-		}
-
-		// Key parsing continuation
-		conn.mLastHeaderKey += std::string(at, length);
-
-		// Continue parsing
-		return 0;
-	} catch (const std::exception&) {
-		// Stop parsing the request
-		return -1;
-	}
-}
-
-int Connection::onHeaderValue(::http_parser* parser, const char* at, size_t length)
-{
-	try {
-		Connection& conn = *static_cast<Connection*>(parser->data);
-		if (conn.mIsParsingHeaderKey) {
-			// Beginning of the header's value
-
-			// Set string length to 0.
-			// Doesn't release the memory so we won't have to allocate again.
-			conn.mLastHeaderValue.clear();
-
-			// Just started receiving value
-			conn.mIsParsingHeaderKey = false;
-		}
-
-		// Value parsing continuation
-		conn.mLastHeaderValue += std::string(at, length);
-
-		// Continue parsing
-		return 0;
-	} catch (const std::exception&) {
-		// Stop parsing the request
-		return -1;
-	}
-}
-
-int Connection::onHeadersComplete(::http_parser* parser)
-{
-	try {
-
-		Connection& conn = *static_cast<Connection*>(parser->data);
-
-		if (!conn.mLastHeaderKey.empty() && !conn.mLastHeaderValue.empty()) {
-			// Set the last key:value header pair (if it exists)
-			conn.mRequest->setHeader(conn.mLastHeaderKey, conn.mLastHeaderValue);
-		}
-		conn.mRequest->setMethod(parser->method);
-
-		conn.mLastHeaderKey.resize(0);
-		conn.mLastHeaderValue.resize(0);
-
-		// Continue parsing
-		return 0;
-	} catch (const std::exception&) {
-		// Stop parsing the request
-		return -1;
-	}
-}
-
-int Connection::onBody(::http_parser* parser, const char* at, size_t length)
-{
-	try {
-		Connection& conn = *static_cast<Connection*>(parser->data);
-		conn.mRequest->appendBody(std::string(at, length));
-
-		// Continue parsing
-		return 0;
-	} catch (const std::exception&) {
-		// Stop parsing the request
-		return -1;
-	}
-}
-
 } // namespace internals
 } // namespace everest
-

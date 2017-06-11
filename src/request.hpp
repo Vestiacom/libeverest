@@ -7,15 +7,16 @@
 #include <memory>
 
 // #include "internals/connection.hpp"
+#include "internals/common.hpp"
 #include "response.hpp"
 #include "types.hpp"
-#include "internals/common.hpp"
 
 namespace everest {
 class Response;
 
 namespace internals {
 class Connection;
+class Receiver;
 }
 
 /**
@@ -23,7 +24,7 @@ class Connection;
  * Handles data appending to ease HTTP parsing.
  */
 struct EVEREST_API Request {
-	friend class internals::Connection;
+	friend class internals::Receiver;
 
 
 	Request(const std::shared_ptr<internals::Connection>& connection);

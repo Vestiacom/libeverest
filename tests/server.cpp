@@ -75,7 +75,7 @@ const std::string TEST_HEADER_VALUE = "B";
 
 BOOST_AUTO_TEST_CASE(LoadTest)
 {
-	int maxConnections = 100000;
+	int maxConnections = 1000;
 
 	int pid = fork();
 	BOOST_REQUIRE(pid != -1);
