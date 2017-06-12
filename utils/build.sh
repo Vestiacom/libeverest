@@ -3,6 +3,8 @@
 set -e
 
 build(){
+	echo "Building: "
+
 	mkdir -p /tmp/build
 	cd /tmp/build
 
@@ -23,11 +25,21 @@ build(){
 }
 
 check(){
+	echo "Cppcheck: "
+	
 	mkdir -p /tmp/ci
 	cd  /tmp/data/utils
 	./cppcheck.sh ../src/*.cpp 2> /tmp/ci/cppcheck.xml
 }
 
+tests() {
+	echo "Testing: "
+
+	rm -f /tmp/ci/results.xml
+	everest-tests --logger=XML,all,/tmp/ci/results.xml --report_level=no --result_code=no --catch_system_errors=no
+}
+
 
 build
 check
+tests
