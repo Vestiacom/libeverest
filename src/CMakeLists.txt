@@ -7,8 +7,9 @@ set(_LIB_VERSION_ "${VERSION}")
 set(_LIB_SOVERSION_ "0")
 set(PC_FILE "lib${PROJECT_NAME}.pc")
 
-set(STATIC_TARGET ${PROJECT_NAME}-static)
 set(SHARED_TARGET ${PROJECT_NAME})
+set(STATIC_TARGET ${PROJECT_NAME}-static)
+set(TMP_TARGET ${PROJECT_NAME}-tmp)
 
 ## Generate the pc file ########################################################
 configure_file(${PC_FILE}.in ${CMAKE_CURRENT_BINARY_DIR}/${PC_FILE} @ONLY)
@@ -18,16 +19,31 @@ configure_file(${PC_FILE}.in ${CMAKE_CURRENT_BINARY_DIR}/${PC_FILE} @ONLY)
 ## Link libraries ##############################################################
 if (ENABLE_STATIC)
 
-    add_library(${STATIC_TARGET} STATIC ${SRCS})
+    # First build everest-only objects 
+    add_library(${TMP_TARGET} ${SRCS})
+    add_dependencies(${TMP_TARGET} ${HTTPPARSER})
+
+    set(STATIC_TARGET_LIBRARY ${CMAKE_BINARY_DIR}/src/lib${PROJECT_NAME}.a)
+
+    add_custom_target(combined
+            COMMAND ar -x $<TARGET_FILE:${TMP_TARGET}>
+            COMMAND ar -x ${HTTPPARSER_LIBRARIES}
+            COMMAND ar -qcs ${STATIC_TARGET_LIBRARY} *.o
+            COMMAND rm ./*.o
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/
+            DEPENDS ${TMP_TARGET} ${HTTPPARSER}
+            )
+
+    add_custom_target(run ALL DEPENDS combined)
+
+    add_library(${STATIC_TARGET} STATIC IMPORTED GLOBAL)
+	add_dependencies(${STATIC_TARGET} run)
+
     set_target_properties(${STATIC_TARGET} PROPERTIES
-                          OUTPUT_NAME ${SHARED_TARGET}
+                          IMPORTED_LOCATION ${STATIC_TARGET_LIBRARY}
                           VERSION     ${_LIB_VERSION_})
-    
-    add_dependencies(${STATIC_TARGET} ${HTTPPARSER})
 
-    target_link_libraries(${STATIC_TARGET} ${HTTPPARSER_LIBRARIES})
-
-    install(TARGETS     ${STATIC_TARGET}
+    install(FILES       ${STATIC_TARGET_LIBRARY}
             COMPONENT   ${STATIC_TARGET}
             DESTINATION ${LIB_INSTALL_DIR})
 

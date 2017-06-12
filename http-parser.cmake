@@ -17,6 +17,5 @@ ExternalProject_add(
 
 #
 ExternalProject_Get_Property(${HTTPPARSER} install_dir)
-message(STATUS ${install_dir})
 set(HTTPPARSER_INCLUDE_DIRS ${install_dir}/include)
 set(HTTPPARSER_LIBRARIES ${CMAKE_SOURCE_DIR}/submodules/http-parser/libhttp_parser.a)
