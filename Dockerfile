@@ -4,7 +4,7 @@
 # This file has to be in the root of the project, so Docker sees all the directories
 #
 
-FROM gcc:5
+FROM gcc:7
 
 RUN apt-get update --fix-missing
 RUN apt-get install -y cmake
