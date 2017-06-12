@@ -13,7 +13,7 @@ add_dependencies(${UT_PROJECT_NAME} ${HTTPPARSER})
 # Automatically create main function
 # add_definitions(-DBOOST_TEST_IGNORE_NON_ZERO_CHILD_CODE) 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 
 
 ## Link libraries ##############################################################

@@ -11,14 +11,14 @@ build(){
 	NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
 	export MAKEFLAGS="-j$((NB_CORES+1)) -l${NB_CORES}"
 
-	cmake /tmp/data -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTING=ON -DENABLE_STATIC=ON -DENABLE_HEADERS=ON
+	cmake /tmp/data -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTING=OFF -DENABLE_STATIC=ON -DENABLE_HEADERS=ON
 	make
 	make install
 
 	make clean
 	rm -rf /tmp/build/*
 
-	cmake /tmp/data -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTING=ON -DENABLE_STATIC=ON -DENABLE_HEADERS=ON
+	cmake /tmp/data -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTING=OFF -DENABLE_STATIC=ON -DENABLE_HEADERS=ON
 	make
 	make install
 
@@ -44,5 +44,5 @@ tests() {
 
 build
 check
-tests
+# tests
 echo "Done"
