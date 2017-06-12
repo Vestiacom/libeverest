@@ -39,7 +39,6 @@ tests() {
 	everest-tests --log_format=XML --log_level=all --log_sink=/tmp/ci/results.xml --report_level=no --result_code=no --catch_system_errors=no
 	sed -i 's/\(<\(TestSuite\|TestCase\) name="[^"]*"\)\([^>]*\)>/\1>/g' /tmp/ci/results.xml
 
-	file /tmp/ci/results.xml
 }
 
 

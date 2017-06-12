@@ -99,7 +99,7 @@ void Server::onCleanupTimeout(ev::timer&, int)
 	mConnections.shrink_to_fit();
 }
 
-std::size_t Server::getConnectionsNumber()
+std::size_t Server::getConnectionsNumber() const
 {
 	return mConnections.size();
 }

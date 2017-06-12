@@ -54,7 +54,7 @@ struct EVEREST_API Server {
 	/**
 	 * @return number of opened connections
 	 */
-	std::size_t getConnectionsNumber();
+	std::size_t getConnectionsNumber() const;
 
 private:
 	// A list of all active connections

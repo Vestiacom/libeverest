@@ -36,10 +36,10 @@ struct EVEREST_API Request {
 
 
 	// Access data
-	HTTPMethod getMethod();
-	const std::string& getURL();
+	HTTPMethod getMethod() const;
+	const std::string& getURL() const;
 	const std::string& getHeader(const std::string& key);
-	std::string getBody();
+	std::string getBody() const;
 
 	// Respond
 	std::shared_ptr<Response> createResponse();

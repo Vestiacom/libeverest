@@ -19,7 +19,7 @@ void Request::setMethod(const unsigned int method)
 	mMethod = static_cast<HTTPMethod>(method);
 }
 
-HTTPMethod Request::getMethod()
+HTTPMethod Request::getMethod() const
 {
 	return mMethod;
 }
@@ -30,7 +30,7 @@ void Request::appendURL(const std::string& url)
 	mURL += url;
 }
 
-const std::string& Request::getURL()
+const std::string& Request::getURL() const
 {
 	return mURL;
 }
@@ -64,7 +64,7 @@ void Request::appendBody(const std::string& chunk)
 	mBodyStream << chunk;
 }
 
-std::string Request::getBody()
+std::string Request::getBody() const
 {
 	return mBodyStream.str();
 }
