@@ -34,6 +34,9 @@ struct Acceptor {
 	void stop();
 
 private:
+	// Called by the watcher when new connections appear
+	void onNewConnection(ev::io& w, int revents);
+
 	// Socket's fd.
 	int mFD;
 
@@ -43,8 +46,6 @@ private:
 	// Callback for new connections
 	NewConnectionCallback mNewConnectionCallback;
 
-	// Called by the watcher when new connections appear
-	void onNewConnection(ev::io& w, int revents);
 };
 
 } // namespace internals

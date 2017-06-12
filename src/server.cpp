@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include "internals/logger.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -13,11 +14,6 @@
 #include "internals/connection.hpp"
 
 using namespace std::placeholders;
-
-// TODO: Remove
-#include <iostream>
-using namespace std;
-
 
 namespace everest {
 
@@ -67,8 +63,6 @@ void Server::onNewConnection(int fd)
 	                                                          std::bind(&Server::onNewRequest, this, _1));
 	connection->start();
 	mConnections.push_back(connection);
-
-	cout << getConnectionsNumber() << endl;
 }
 
 void Server::onNewRequest(const std::shared_ptr<Request>& r)
@@ -77,6 +71,7 @@ void Server::onNewRequest(const std::shared_ptr<Request>& r)
 		mEndpointCallbacks[r->getURL()](r);
 	} catch (const std::out_of_range&) {
 		// No callback for this URL
+		LOGE("No callback for URL, returning 404");
 		// auto resp = r.createResponse();
 		// resp->setStatus(404);
 		// resp->send();
@@ -100,8 +95,6 @@ void Server::removeDisconnected()
 
 void Server::onCleanupTimeout(ev::timer&, int)
 {
-	cout << "----------------------" << endl;
-	cout << mConnections.size() << endl;
 	removeDisconnected();
 	mConnections.shrink_to_fit();
 }

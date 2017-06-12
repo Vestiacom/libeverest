@@ -2,7 +2,6 @@
 
 #include <algorithm> // for std::find
 
-
 namespace everest {
 
 Request::Request(const std::shared_ptr<internals::Connection>& connection)

@@ -1,5 +1,5 @@
 #include "acceptor.hpp"
-
+#include "logger.hpp"
 
 #include <ev++.h>
 #include <stdexcept>
@@ -11,8 +11,6 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-#include <iostream>
-
 namespace {
 
 /**
@@ -23,9 +21,7 @@ int createListeningSocket(const unsigned short port)
 	// setup socket for TCP proxy
 	int fd = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (fd == -1) {
-		std::ostringstream msg;
-		msg << "socket() failed with:  " << std::strerror(errno);
-		throw std::runtime_error(msg.str());
+		THROW("socket() failed with:  " << std::strerror(errno));
 	}
 
 	struct sockaddr_in addr;
@@ -38,26 +34,17 @@ int createListeningSocket(const unsigned short port)
 	int optval = 1;
 	if (::setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
 		::close(fd);
-
-		std::ostringstream msg;
-		msg << "setsockopt() failed with: " << std::strerror(errno);
-		throw std::runtime_error(msg.str());
+		THROW("setsockopt() failed with: " << std::strerror(errno));
 	}
 
 	if (::bind(fd, (struct sockaddr*) &addr, sizeof(addr)) == -1) {
 		::close(fd);
-
-		std::ostringstream msg;
-		msg << "bind() failed with: " << std::strerror(errno);
-		throw std::runtime_error(msg.str());
+		THROW("bind() failed with: " << std::strerror(errno));
 	}
 
 	if (::listen(fd, 10) == -1) {
 		::close(fd);
-
-		std::ostringstream msg;
-		msg << "listen() failed with: " << std::strerror(errno);
-		throw std::runtime_error(msg.str());
+		THROW("listen() failed with: " << std::strerror(errno));
 	}
 
 	return fd;
@@ -75,7 +62,7 @@ Acceptor::Acceptor(const unsigned short port,
 	  mNewConnectionCallback(newConnectionCallback)
 {
 	if (!evLoop) {
-		throw std::runtime_error("ev_loop is null");
+		THROW("ev_loop is null");
 	}
 
 	mFD = createListeningSocket(port);
@@ -102,14 +89,16 @@ void Acceptor::stop()
 
 void Acceptor::onNewConnection(ev::io& w, int revents)
 {
+	LOGD("Accepting new connection");
 	if (EV_ERROR & revents) {
 		// Unspecified error
-		return;
+		THROW("Unspecified on accepting socket");
 	}
 
 	// New proxy connection
-	int fd = ::accept4(w.fd, NULL, NULL, SOCK_NONBLOCK);
+	int fd = ::accept4(w.fd, NULL, NULL, ::SOCK_NONBLOCK);
 	if (fd < 0) {
+		LOGW("accept4() failed with " << std::strerror(errno));
 		return;
 	}
 

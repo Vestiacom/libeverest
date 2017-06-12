@@ -1,4 +1,5 @@
 #include "sender.hpp"
+#include "logger.hpp"
 #include "../response.hpp"
 
 #include <map>
@@ -8,10 +9,6 @@
 #include <http_parser.h>
 
 #include <sys/socket.h>
-
-// TODO: Reomove
-#include <iostream>
-using namespace std;
 
 namespace {
 
@@ -34,11 +31,11 @@ Sender::Sender(int fd, struct ev_loop* evLoop)
 	  mFD(fd)
 {
 	if (!evLoop) {
-		throw std::runtime_error("ev_loop is null");
+		THROW("ev_loop is null");
 	}
 
 	if (mFD < 0) {
-		throw std::runtime_error("bad fd");
+		THROW("bad fd");
 	}
 
 	mOutputWatcher.set<Sender, &Sender::onOutput>(this);
@@ -140,14 +137,10 @@ void Sender::fillBuffer()
 
 void Sender::onOutput(ev::io& w, int revents)
 {
-	cout << "onOutput" << endl;
+	// cout << "onOutput" << endl;
 
 	if (EV_ERROR & revents) {
-		// Unspecified error
-		std::ostringstream msg;
-		msg << "Unspecified error in output callback: " <<  std::strerror(errno);
-		throw std::runtime_error(msg.str());
-		return;
+		THROW("Unspecified error in output callback: " <<  std::strerror(errno));
 	}
 
 
@@ -183,9 +176,7 @@ void Sender::onOutput(ev::io& w, int revents)
 			shutdown();
 			return;
 		}
-		std::ostringstream msg;
-		msg << "write() failed with: " <<  std::strerror(errno);
-		throw std::runtime_error(msg.str());
+		THROW("write() failed with: " <<  std::strerror(errno));
 	}
 
 	if (n == 0) {

@@ -1,14 +1,12 @@
 #include "connection.hpp"
+#include "logger.hpp"
 
 #include <vector>
 #include <map>
 #include <ev++.h>
 #include <unistd.h>
-
-// TODO: Reomove
-#include <iostream>
-using namespace std;
-
+#include <cerrno>
+#include <cstring>
 
 namespace everest {
 namespace internals {
@@ -22,11 +20,11 @@ Connection::Connection(int fd,
 	  mFD(fd)
 {
 	if (!evLoop) {
-		throw std::runtime_error("ev_loop is null");
+		THROW("ev_loop is null");
 	}
 
 	if (mFD < 0) {
-		throw std::runtime_error("bad fd");
+		THROW("bad fd");
 	}
 }
 
@@ -62,7 +60,10 @@ void Connection::shutdown()
 	mReceiver.shutdown();
 	mSender.shutdown();
 
-	::close(mFD);
+	if (-1 == ::close(mFD)) {
+		LOGW("close() failed with: " << std::strerror(errno));
+	}
+
 	mFD = -1;
 }
 

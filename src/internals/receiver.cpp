@@ -1,19 +1,14 @@
 #include "receiver.hpp"
 #include "connection.hpp"
+#include "logger.hpp"
 
 #include <ev++.h>
 #include <unistd.h>
 #include <cerrno>
 #include <cstring>
 #include <sstream>
-
-
-// #include <sys/types.h>
 #include <sys/socket.h>
 
-// TODO: Reomove
-#include <iostream>
-using namespace std;
 
 namespace everest {
 namespace internals {
@@ -33,11 +28,11 @@ Receiver::Receiver(int fd,
 	  mLastHeaderValue("")
 {
 	if (!evLoop) {
-		throw std::runtime_error("ev_loop is null");
+		THROW("ev_loop is null");
 	}
 
 	if (mFD < 0) {
-		throw std::runtime_error("bad fd");
+		THROW("bad fd");
 	}
 
 	mInputWatcher.set<Receiver, &Receiver::onInput>(this);
@@ -83,7 +78,9 @@ void Receiver::shutdown()
 
 	// No communication with the socket is possible after shutdown
 	stop();
-	::shutdown(mFD, ::SHUT_RD);
+	if (-1 == ::shutdown(mFD, ::SHUT_RD)) {
+		LOGW("shutdown() failed with: " <<  std::strerror(errno));
+	}
 	mFD = -1;
 
 	mLastHeaderKey.clear();
@@ -99,13 +96,8 @@ bool Receiver::isClosed()
 
 void Receiver::onInput(ev::io& w, int revents)
 {
-	cout << "onInput" << endl;
-
 	if (EV_ERROR & revents) {
-		// Unspecified error
-		std::ostringstream msg;
-		msg << "Unspecified error in input callback:" <<  std::strerror(errno);
-		throw std::runtime_error(msg.str());
+		THROW("Unspecified error in input callback:" <<  std::strerror(errno));
 	}
 
 	// Make this configurable
@@ -121,15 +113,13 @@ void Receiver::onInput(ev::io& w, int revents)
 		}
 
 		// TODO: Test throwing in libev watcher
-		std::ostringstream msg;
-		msg << "Error when reading the Receiver's socket:" <<  std::strerror(errno);
-		throw std::runtime_error(msg.str());
+		THROW("Error when reading the Receiver's socket:" <<  std::strerror(errno));
 	}
 
 	// Start / continue parsing. We pass received==0 to signal that EOF has been received
 	ssize_t nparsed = http_parser_execute(mParser.get(), &mParserSettings, buf, received);
 	if (nparsed != received) {
-		throw std::runtime_error("Http parser error");
+		THROW("Http parser error");
 	}
 
 	if (received == 0) {
@@ -156,8 +146,9 @@ int Receiver::onMessageBegin(::http_parser* parser)
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception&) {
+	} catch (const std::exception& e) {
 		// Stop parsing the request
+		LOGE("Got exception in parsing HTTP:" << e.what());
 		return -1;
 	}
 }
@@ -172,8 +163,9 @@ int Receiver::onMessageComplete(::http_parser* parser)
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception&) {
+	} catch (const std::exception& e) {
 		// Stop parsing the request
+		LOGE("Got exception in parsing HTTP:" << e.what());
 		return -1;
 	}
 }
@@ -188,8 +180,9 @@ int Receiver::onURL(::http_parser* parser, const char* at, size_t length)
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception&) {
+	} catch (const std::exception& e) {
 		// Stop parsing the request
+		LOGE("Got exception in parsing HTTP:" << e.what());
 		return -1;
 	}
 }
@@ -221,8 +214,9 @@ int Receiver::onHeaderField(::http_parser* parser, const char* at, size_t length
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception&) {
+	} catch (const std::exception& e) {
 		// Stop parsing the request
+		LOGE("Got exception in parsing HTTP:" << e.what());
 		return -1;
 	}
 }
@@ -247,8 +241,9 @@ int Receiver::onHeaderValue(::http_parser* parser, const char* at, size_t length
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception&) {
+	} catch (const std::exception& e) {
 		// Stop parsing the request
+		LOGE("Got exception in parsing HTTP:" << e.what());
 		return -1;
 	}
 }
@@ -270,8 +265,9 @@ int Receiver::onHeadersComplete(::http_parser* parser)
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception&) {
+	} catch (const std::exception& e) {
 		// Stop parsing the request
+		LOGE("Got exception in parsing HTTP:" << e.what());
 		return -1;
 	}
 }
@@ -284,8 +280,9 @@ int Receiver::onBody(::http_parser* parser, const char* at, size_t length)
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception&) {
+	} catch (const std::exception& e) {
 		// Stop parsing the request
+		LOGE("Got exception in parsing HTTP:" << e.what());
 		return -1;
 	}
 }
