@@ -12,12 +12,12 @@
 
 namespace everest {
 
-class Request;
-class Response;
+struct Request;
+struct Response;
 
 namespace internals {
 
-class Connection;
+struct Connection;
 
 /**
  * Receives data from the socket and parses HTTP requests.

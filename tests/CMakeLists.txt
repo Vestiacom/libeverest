@@ -12,6 +12,7 @@ add_dependencies(${UT_PROJECT_NAME} ${HTTPPARSER})
 ## Defines #####################################################################
 # Automatically create main function
 # add_definitions(-DBOOST_TEST_IGNORE_NON_ZERO_CHILD_CODE) 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 
 
 ## Link libraries ##############################################################
@@ -21,6 +22,7 @@ find_package(Boost REQUIRED COMPONENTS unit_test_framework system filesystem)
 
 include_directories(${SRC_DIR} ${TESTS_DIR})
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS} ${DEPS_INCLUDE_DIR})
+include_directories(SYSTEM ${HTTPPARSER_INCLUDE_DIRS})
 
 target_link_libraries(${UT_PROJECT_NAME} ${Boost_LIBRARIES} ${DEPS_LIBRARIES} ${HTTPPARSER_LIBRARIES} ev.a pthread)
 

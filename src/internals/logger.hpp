@@ -31,11 +31,13 @@ extern thread_local LogCallback gLogCallback;
         throw std::runtime_error(msg__.str()); \
         } while (0)
 
-#if !defined(NDEBUG)
-
 #define LOGE(MESSAGE) LOG(everest::LogLevel::ERROR, MESSAGE)
 #define LOGW(MESSAGE) LOG(everest::LogLevel::WARN, MESSAGE)
 #define LOGI(MESSAGE) LOG(everest::LogLevel::INFO, MESSAGE)
+
+
+#if !defined(NDEBUG)
+
 #define LOGD(MESSAGE) LOG(everest::LogLevel::DEBUG, MESSAGE)
 #define LOGT(MESSAGE) LOG(everest::LogLevel::TRACE, MESSAGE)
 

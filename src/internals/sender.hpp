@@ -8,7 +8,7 @@
 
 namespace everest {
 
-class Response;
+struct Response;
 
 
 namespace internals {

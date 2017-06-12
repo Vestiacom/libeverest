@@ -13,12 +13,12 @@
 
 namespace everest {
 
-class Request;
+struct Request;
 
 namespace internals {
 
-class Receiver;
-class Sender;
+struct Receiver;
+struct Sender;
 
 /**
  * Wraps together all data used by one connection and HTTP parsing for this connection.

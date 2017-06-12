@@ -1,0 +1,14 @@
+version: '2'
+
+services:
+    libeverest:
+      build:
+        context: ../.
+      container_name: libeverest
+      volumes:
+        - "../.:/tmp/data/:rw"
+        - "../build/ci:/tmp/ci/:rw"
+      # environment:
+      #     - CC=gcc
+      #     - CXX=g++
+      #     - CFLAGS="-fdiagnostics-color=always"

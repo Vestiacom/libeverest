@@ -12,11 +12,11 @@
 #include "types.hpp"
 
 namespace everest {
-class Response;
+struct Response;
 
 namespace internals {
-class Connection;
-class Receiver;
+struct Connection;
+struct Receiver;
 }
 
 /**
@@ -24,7 +24,7 @@ class Receiver;
  * Handles data appending to ease HTTP parsing.
  */
 struct EVEREST_API Request {
-	friend class internals::Receiver;
+	friend struct internals::Receiver;
 
 
 	Request(const std::shared_ptr<internals::Connection>& connection);

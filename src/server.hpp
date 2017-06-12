@@ -15,7 +15,7 @@
 
 namespace everest {
 
-class Request;
+struct Request;
 
 /**
  * This is the entry point of the library.
@@ -35,8 +35,6 @@ struct EVEREST_API Server {
 
 	/**
 	 * Starts serving requests using the ev loop
-	 *
-	 * @param ev_loop ev loop
 	 */
 	void start();
 

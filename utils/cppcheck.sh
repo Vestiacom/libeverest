@@ -1,0 +1,15 @@
+#!/bin/sh
+OPT=""
+OPT="$OPT --enable=all"
+OPT="$OPT --force"
+OPT="$OPT --std=c++11"
+OPT="$OPT --inconclusive"
+OPT="$OPT --suppress=missingIncludeSystem"
+OPT="$OPT --suppress=unusedFunction"
+OPT="$OPT --inline-suppr"
+OPT="$OPT -iCMakeFiles"
+OPT="$OPT -i../src/json"
+OPT="$OPT -i../submodules"
+OPT="$OPT -i../tests"
+OPT="$OPT -I ../src"
+cppcheck ${OPT} --template=gcc --xml --xml-version=2 $@

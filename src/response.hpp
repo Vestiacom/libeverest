@@ -15,7 +15,7 @@
 namespace everest {
 
 namespace internals {
-class Connection;
+struct Connection;
 }
 
 /**

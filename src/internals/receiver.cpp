@@ -8,6 +8,7 @@
 #include <cstring>
 #include <sstream>
 #include <sys/socket.h>
+#include <vector>
 
 
 namespace everest {
@@ -101,10 +102,9 @@ void Receiver::onInput(ev::io& w, int revents)
 	}
 
 	// Make this configurable
-	ssize_t len = 512;
-	char buf[len];
+	std::vector<char> buf(1024);
 
-	ssize_t received = ::read(w.fd, buf, len);
+	ssize_t received = ::read(w.fd, buf.data(), buf.size());
 	if (received < 0) {
 		if (errno == ECONNRESET) {
 			// Connection reset by peer.
@@ -117,7 +117,7 @@ void Receiver::onInput(ev::io& w, int revents)
 	}
 
 	// Start / continue parsing. We pass received==0 to signal that EOF has been received
-	ssize_t nparsed = http_parser_execute(mParser.get(), &mParserSettings, buf, received);
+	ssize_t nparsed = http_parser_execute(mParser.get(), &mParserSettings, buf.data(), received);
 	if (nparsed != received) {
 		THROW("Http parser error");
 	}
