@@ -77,6 +77,11 @@ private:
 	// Some data might have been send,
 	// this is the position of the first unsent byte in the mOutputBuffer.
 	std::size_t mOutputBufferPosition;
+
+
+	// Flow control variable.
+	// Does the response that is being send have the Connection: close header?
+	bool mIsClosing;
 };
 
 } // namespace internals

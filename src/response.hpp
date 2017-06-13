@@ -21,11 +21,15 @@ struct Connection;
 /**
  * Keeps all data of an outgoing HTTP response.
  * Handles data appending.
+ *
+ * If there are many Response objects per one connection you have to call send:
+ * - for each of them
+ * - in the order they came to your callback
  */
 struct EVEREST_API Response: std::enable_shared_from_this<Response> {
 
 	// TODO: Make constructor protected
-	Response(const std::shared_ptr<internals::Connection>& connection);
+	Response(const std::shared_ptr<internals::Connection>& connection, const bool isClosing = false);
 	~Response();
 
 	Response(const Response&) = delete;
@@ -36,13 +40,15 @@ struct EVEREST_API Response: std::enable_shared_from_this<Response> {
 	unsigned short getStatus();
 
 	void setHeader(const std::string& key, const std::string& value);
-	const std::string& getHeader(const std::string& key);
+	const std::string getHeader(const std::string& key);
 	const headers_t& getHeaders();
 
 	void appendBody(const std::string& chunk);
 	std::string getBody();
 
 	void send();
+
+	bool isClosing();
 private:
 	headers_t::iterator findHeader(const std::string& key);
 	headers_t mHeaders;
@@ -51,6 +57,10 @@ private:
 	std::stringstream mBodyStream;
 
 	std::shared_ptr<internals::Connection> mConnection;
+
+	// This is the last, closing response.
+	// After it's sent the connection will be closed.
+	bool mIsClosing;
 };
 
 } // namespace everest

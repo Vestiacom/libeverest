@@ -54,9 +54,13 @@ void Request::setHeader(const std::string& key, const std::string& value)
 	mHeaders.emplace_back(key, value);
 }
 
-const std::string& Request::getHeader(const std::string& key)
+const std::string Request::getHeader(const std::string& key)
 {
-	return findHeader(key)->second;
+	auto it = findHeader(key);
+	if (it != mHeaders.end()) {
+		return it->second;
+	}
+	return "";
 }
 
 void Request::appendBody(const std::string& chunk)
@@ -71,7 +75,8 @@ std::string Request::getBody() const
 
 std::shared_ptr<Response> Request::createResponse()
 {
-	return std::make_shared<Response>(mConnection);
+	bool isClosing = getHeader("Connection") == "close";
+	return std::make_shared<Response>(mConnection, isClosing);
 }
 
 

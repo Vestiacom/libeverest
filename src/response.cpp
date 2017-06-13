@@ -4,9 +4,10 @@
 
 namespace everest {
 
-Response::Response(const std::shared_ptr<internals::Connection>& connection)
+Response::Response(const std::shared_ptr<internals::Connection>& connection, const bool isClosing)
 	: mStatus(200),
-	  mConnection(connection)
+	  mConnection(connection),
+	  mIsClosing(isClosing)
 {
 
 }
@@ -23,6 +24,11 @@ void Response::setStatus(const unsigned short status)
 unsigned short Response::getStatus()
 {
 	return mStatus;
+}
+
+bool Response::isClosing()
+{
+	return mIsClosing;
 }
 
 headers_t::iterator Response::findHeader(const std::string& key)
@@ -44,9 +50,13 @@ void Response::setHeader(const std::string& key, const std::string& value)
 	mHeaders.emplace_back(key, value);
 }
 
-const std::string& Response::getHeader(const std::string& key)
+const std::string Response::getHeader(const std::string& key)
 {
-	return findHeader(key)->second;
+	auto it = findHeader(key);
+	if (it != mHeaders.end()) {
+		return it->second;
+	}
+	return "";
 }
 
 const headers_t& Response::getHeaders()
@@ -66,6 +76,11 @@ std::string Response::getBody()
 
 void Response::send()
 {
+	// Set Connection: close header
+	if (mIsClosing) {
+		setHeader("Connection", "close");
+	}
+
 	// Set Content-Length header
 	mBodyStream.seekg(0, mBodyStream.end);
 	ssize_t size = mBodyStream.tellg();

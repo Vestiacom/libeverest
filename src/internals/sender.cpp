@@ -28,7 +28,8 @@ namespace internals {
 
 Sender::Sender(int fd, struct ev_loop* evLoop)
 	: mOutputWatcher(evLoop),
-	  mFD(fd)
+	  mFD(fd),
+	  mIsClosing(false)
 {
 	if (!evLoop) {
 		THROW("ev_loop is null");
@@ -126,8 +127,11 @@ void Sender::fillBuffer()
 	std::string body = response.getBody();
 	std::copy(body.begin(), body.end(), std::back_inserter(mOutputBuffer));
 
-	mResponses.pop();
 
+	// Should this be the last message?
+	mIsClosing = response.isClosing();
+
+	mResponses.pop();
 
 	// for (auto c : mOutputBuffer) {
 	// 	cout << c;
@@ -147,6 +151,12 @@ void Sender::onOutput(ev::io& w, int revents)
 	// Ensure output buffer has any data to send
 	if (mOutputBufferPosition >= mOutputBuffer.size()) {
 		// No data to send in mOutputBuffer.
+
+		if (mIsClosing) {
+			// And it was the last message in this connection
+			shutdown();
+		}
+
 
 		if (mResponses.empty()) {
 			// And there's no more responses to send.
