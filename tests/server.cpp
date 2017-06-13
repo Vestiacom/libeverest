@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(POST)
 
 BOOST_AUTO_TEST_CASE(LoadTest)
 {
-	int maxConnections = 1000;
+	int maxConnections = 100;
 
 	int pid = fork();
 	BOOST_REQUIRE(pid != -1);
