@@ -1,12 +1,14 @@
 #ifndef EVEREST_CONFIG_HPP_
 #define EVEREST_CONFIG_HPP_
 
+#include "internals/common.hpp"
+
 #include <string>
 
 namespace everest {
 
 // Configuration options for the Server
-struct Config {
+struct EVEREST_API Config {
 
 	Config(const std::string& url);
 
