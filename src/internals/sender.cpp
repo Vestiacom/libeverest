@@ -133,10 +133,7 @@ void Sender::fillBuffer()
 
 	mResponses.pop();
 
-	// for (auto c : mOutputBuffer) {
-	// 	cout << c;
-	// }
-	// cout << endl;
+	LOGT(std::string(mOutputBuffer.data(), mOutputBuffer.size()));
 }
 
 void Sender::onOutput(ev::io& w, int revents)
