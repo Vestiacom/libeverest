@@ -3,6 +3,7 @@
 
 // Helper header with all other headers needed to setup libeverest server.
 
+#include "config.hpp"
 #include "types.hpp"
 #include "server.hpp"
 #include "request.hpp"

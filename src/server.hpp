@@ -12,6 +12,7 @@
 #include "internals/common.hpp"
 
 #include "request.hpp"
+#include "config.hpp"
 
 namespace everest {
 
@@ -24,9 +25,7 @@ struct Request;
 struct EVEREST_API Server {
 	typedef std::function<void(const std::shared_ptr<Request>&)> EndpointCallback;
 
-	Server(const unsigned short port,
-	       struct ev_loop* evLoop,
-	       const size_t maxConnections = 1000);
+	Server(const Config& config, struct ev_loop* evLoop);
 	~Server();
 
 	Server(const Server&) = delete;
@@ -66,8 +65,8 @@ private:
 	// Event loop
 	struct ev_loop* mEvLoop;
 
-	// Max number of concurrent connections
-	size_t mMaxConnections;
+	// Server's configuration
+	Config mConfig;
 
 	// For periodical cleanups
 	ev::timer mCleanupTimer;

@@ -2,6 +2,7 @@
 
 #include <string>
 #include "server.hpp"
+#include "config.hpp"
 #include <iostream>
 
 #include <thread>
@@ -12,6 +13,7 @@ BOOST_AUTO_TEST_SUITE(ServerTestSuite)
 using namespace everest;
 
 const unsigned short TEST_PORT = 6000;
+const Config TEST_CONFIG("0.0.0.0:6000");
 const std::string TEST_URL = "/test";
 const std::string TEST_BODY = "TEST BODY";
 const std::string TEST_HEADER_KEY = "A";
@@ -21,7 +23,7 @@ BOOST_AUTO_TEST_CASE(BadArgs)
 {
 	// Port 53 is most likely taken
 	// BOOST_CHECK_THROW(Server a(53, EV_DEFAULT), std::runtime_error);
-	BOOST_CHECK_THROW(Server a(TEST_PORT, nullptr), std::runtime_error);
+	BOOST_CHECK_THROW(Server a(TEST_CONFIG, nullptr), std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(GET)
@@ -30,7 +32,7 @@ BOOST_AUTO_TEST_CASE(GET)
 
 	struct ev_loop* loop = EV_DEFAULT;
 
-	Server s(TEST_PORT, loop);
+	Server s(TEST_CONFIG, loop);
 	s.endpoint(TEST_URL, [&](const std::shared_ptr<Request>& r) {
 		isOK = r->getURL() == TEST_URL
 		       && r->getHeader(TEST_HEADER_KEY) == TEST_HEADER_VALUE;
@@ -53,7 +55,7 @@ BOOST_AUTO_TEST_CASE(POST)
 
 	struct ev_loop* loop = EV_DEFAULT;
 
-	Server s(TEST_PORT, loop);
+	Server s(TEST_CONFIG, loop);
 	s.endpoint(TEST_URL, [&](const std::shared_ptr<Request>& r) {
 		isOK = r->getURL() == TEST_URL
 		       && r->getHeader(TEST_HEADER_KEY) == TEST_HEADER_VALUE
@@ -104,7 +106,7 @@ BOOST_AUTO_TEST_CASE(LoadTest)
 	int counter = 0;
 
 	struct ev_loop* loop = EV_DEFAULT;
-	Server s(TEST_PORT, loop);
+	Server s(TEST_CONFIG, loop);
 	s.endpoint(TEST_URL, [&](const std::shared_ptr<Request>& r) {
 		++counter;
 		isOK = r->getURL() == TEST_URL

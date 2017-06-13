@@ -12,7 +12,7 @@ namespace internals {
 struct URL {
 	URL(const std::string& url);
 
-	std::string host;
+	std::string hostname;
 	unsigned short port;
 };
 

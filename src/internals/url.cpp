@@ -8,7 +8,7 @@ namespace everest {
 namespace internals {
 
 URL::URL(const std::string& url)
-	: host("0.0.0.0"),
+	: hostname("0.0.0.0"),
 	  port(80)
 {
 	// Use http-parser's ULR parser
@@ -23,8 +23,8 @@ URL::URL(const std::string& url)
 	}
 
 	if (u->field_set & (1 << UF_HOST)) {
-		host = std::string(&url[u->field_data[::UF_HOST].off],
-		                   u->field_data[::UF_HOST].len);
+		hostname = std::string(&url[u->field_data[::UF_HOST].off],
+		                       u->field_data[::UF_HOST].len);
 	}
 
 	if (u->field_set & (1 << UF_PORT)) {

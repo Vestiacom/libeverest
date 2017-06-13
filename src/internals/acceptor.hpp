@@ -14,7 +14,8 @@ namespace internals {
 struct Acceptor {
 	typedef std::function<void(int fd)> NewConnectionCallback;
 
-	Acceptor(const unsigned short port,
+	Acceptor(const std::string& ip,
+	         const unsigned short port,
 	         struct ev_loop* evLoop,
 	         const NewConnectionCallback& newConnectionCallback);
 	~Acceptor();

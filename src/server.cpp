@@ -17,11 +17,11 @@ using namespace std::placeholders;
 
 namespace everest {
 
-Server::Server(const unsigned short port, struct ev_loop* evLoop, const size_t maxConnections)
+Server::Server(const Config& config, struct ev_loop* evLoop)
 	: mEvLoop(evLoop),
-	  mMaxConnections(maxConnections),
+	  mConfig(config),
 	  mCleanupTimer(evLoop),
-	  mAcceptor(port, evLoop, std::bind(&Server::onNewConnection, this, _1))
+	  mAcceptor(config.ip, config.port, evLoop, std::bind(&Server::onNewConnection, this, _1))
 {
 	mCleanupTimer.set<Server, &Server::onCleanupTimeout>(this);
 }
@@ -34,7 +34,7 @@ Server::~Server()
 void Server::start()
 {
 	mAcceptor.start();
-	mCleanupTimer.start(0.25/*after in seconds*/, 0.25 /*period in seconds*/);
+	mCleanupTimer.start(0, mConfig.cleanupPeriodSec);
 }
 
 void Server::stop()
@@ -51,7 +51,7 @@ void Server::endpoint(const std::string& url, const EndpointCallback& endpointCa
 
 void Server::onNewConnection(int fd)
 {
-	if (mConnections.size() > mMaxConnections) {
+	if (mConnections.size() > mConfig.maxConnections) {
 		// Stop accepting more connections
 		mAcceptor.stop();
 		removeDisconnected();
@@ -90,7 +90,7 @@ void Server::removeDisconnected()
 	}), mConnections.end());
 
 	// Stop or resume accepting more connections
-	mConnections.size() > mMaxConnections ? mAcceptor.stop() : mAcceptor.start();
+	mConnections.size() > mConfig.maxConnections ? mAcceptor.stop() : mAcceptor.start();
 }
 
 void Server::onCleanupTimeout(ev::timer&, int)

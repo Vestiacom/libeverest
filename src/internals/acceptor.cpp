@@ -10,13 +10,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 
 namespace {
 
 /**
  * @return Socket setup for listening for new HTTP connections
  */
-int createListeningSocket(const unsigned short port)
+int createListeningSocket(const std::string& ip, const unsigned short port)
 {
 	// setup socket for TCP proxy
 	int fd = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -29,7 +30,7 @@ int createListeningSocket(const unsigned short port)
 
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_addr.s_addr = inet_addr(ip.c_str());
 
 	int optval = 1;
 	if (::setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) == -1) {
@@ -55,7 +56,8 @@ int createListeningSocket(const unsigned short port)
 namespace everest {
 namespace internals {
 
-Acceptor::Acceptor(const unsigned short port,
+Acceptor::Acceptor(const std::string& ip,
+                   const unsigned short port,
                    struct ev_loop* evLoop,
                    const NewConnectionCallback& newConnectionCallback)
 	: mWatcher(evLoop),
@@ -65,7 +67,7 @@ Acceptor::Acceptor(const unsigned short port,
 		THROW("ev_loop is null");
 	}
 
-	mFD = createListeningSocket(port);
+	mFD = createListeningSocket(ip, port);
 
 	mWatcher.set<Acceptor, &Acceptor::onNewConnection>(this);
 }

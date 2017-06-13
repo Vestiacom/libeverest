@@ -52,4 +52,3 @@ extern thread_local LogCallback gLogCallback;
 } // namespace internals
 
 #endif // EVEREST_INTERNALS_LOGGER_HPP_
-
