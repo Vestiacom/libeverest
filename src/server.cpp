@@ -68,7 +68,16 @@ void Server::onNewConnection(int fd)
 void Server::onNewRequest(const std::shared_ptr<Request>& r)
 {
 	try {
-		mEndpointCallbacks.at(r->getURL())(r);
+		auto& callback = mEndpointCallbacks.at(r->getURL());
+
+		try {
+			callback(r);
+		} catch (const std::exception& e) {
+			LOGE("Exception in endpoint: " << r->getURL() << " :" << e.what());
+			auto resp = r->createResponse();
+			resp->setStatus(500);
+			resp->send();
+		}
 	} catch (const std::out_of_range&) {
 		LOGE("No callback for URL, returning 404");
 		auto resp = r->createResponse();
