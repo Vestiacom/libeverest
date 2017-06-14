@@ -1,8 +1,7 @@
 #ifndef EVEREST_INTERNALS_CONNECTION_HPP_
 #define EVEREST_INTERNALS_CONNECTION_HPP_
 
-#include "receiver.hpp"
-#include "sender.hpp"
+
 #include "../request.hpp"
 
 #include <queue>
@@ -14,6 +13,7 @@
 namespace everest {
 
 struct Request;
+struct Response;
 
 namespace internals {
 
@@ -70,10 +70,10 @@ struct Connection: std::enable_shared_from_this<Connection> {
 
 private:
 	// Handles receiving data and parsing HTTP requests
-	Receiver mReceiver;
+	std::unique_ptr<Receiver> mReceiver;
 
 	// Handles sending HTTP responses
-	Sender mSender;
+	std::unique_ptr<Sender> mSender;
 
 	// Shutdowns the connection (calls ConnectionLostCallback)
 	void shutdown();
