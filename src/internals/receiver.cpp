@@ -79,7 +79,7 @@ void Receiver::shutdown()
 
 	// No communication with the socket is possible after shutdown
 	stop();
-	if (-1 == ::shutdown(mFD, ::SHUT_RD)) {
+	if (-1 == ::shutdown(mFD, SHUT_RD)) {
 		LOGW("shutdown() failed with: " <<  std::strerror(errno));
 	}
 	mFD = -1;

@@ -98,7 +98,7 @@ void Acceptor::onNewConnection(ev::io& w, int revents)
 	}
 
 	// New proxy connection
-	int fd = ::accept4(w.fd, NULL, NULL, ::SOCK_NONBLOCK);
+	int fd = ::accept4(w.fd, NULL, NULL, SOCK_NONBLOCK);
 	if (fd < 0) {
 		LOGW("accept4() failed with " << std::strerror(errno));
 		return;
