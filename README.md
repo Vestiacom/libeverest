@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://openclipart.org/download/215778/Mount-Everest.svg" height="250" />
+  <img src="https://github.com/Vestiacom/libeverest/blob/master/doc/everest.png?raw=true" height="250" />
 </p>
 
 # Everest
