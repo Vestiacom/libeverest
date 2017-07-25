@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/Vestiacom/libeverest/blob/master/doc/everest.png?raw=true" height="250" />
+  <img src="https://github.com/Vestiacom/libeverest/blob/master/doc/everest.png?raw=true" />
 </p>
 
 # Everest
