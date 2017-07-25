@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://openclipart.org/download/215778/Mount-Everest.svg" height="250" />
+</p>
+
 # Everest
 LibEverest is a library for embedding a HTTP server inside a C++ application. It uses [libev](http://software.schmorp.de/pkg/libev.html) and [http-parser](https://github.com/nodejs/http-parser). 
 
