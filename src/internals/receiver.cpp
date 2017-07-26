@@ -98,7 +98,9 @@ bool Receiver::isClosed()
 void Receiver::onInput(ev::io& w, int revents)
 {
 	if (EV_ERROR & revents) {
-		THROW("Unspecified error in input callback:" <<  std::strerror(errno));
+		LOGW("Unspecified error in input callback: " <<  std::strerror(errno));
+		shutdown();
+		return;
 	}
 
 	// Make this configurable
@@ -112,14 +114,17 @@ void Receiver::onInput(ev::io& w, int revents)
 			return;
 		}
 
-		// TODO: Test throwing in libev watcher
-		THROW("Error when reading the Receiver's socket:" <<  std::strerror(errno));
+		LOGE("Error when reading the Receiver's socket:" <<  std::strerror(errno));
+		shutdown();
+		return;
 	}
 
 	// Start / continue parsing. We pass received==0 to signal that EOF has been received
 	ssize_t nparsed = http_parser_execute(mParser.get(), &mParserSettings, buf.data(), received);
 	if (nparsed != received) {
-		THROW("Http parser error");
+		LOGE("Http parser error");
+		shutdown();
+		return;
 	}
 
 	if (received == 0) {

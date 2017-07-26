@@ -94,7 +94,7 @@ void Acceptor::onNewConnection(ev::io& w, int revents)
 	LOGD("Accepting new connection");
 	if (EV_ERROR & revents) {
 		// Unspecified error
-		THROW("Unspecified on accepting socket");
+		LOGE("Unspecified on accepting socket");
 	}
 
 	// New proxy connection

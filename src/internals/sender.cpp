@@ -68,7 +68,9 @@ void Sender::shutdown()
 	// No communication with the socket is possible after shutdown
 	stop();
 
-	::shutdown(mFD, SHUT_WR);
+	if (-1 == ::shutdown(mFD, SHUT_WR)) {
+		LOGW("shutdown() failed with: " <<  std::strerror(errno));
+	}
 	mFD = -1;
 
 	while (!mResponses.empty()) {
@@ -141,7 +143,9 @@ void Sender::onOutput(ev::io& w, int revents)
 	// cout << "onOutput" << endl;
 
 	if (EV_ERROR & revents) {
-		THROW("Unspecified error in output callback: " <<  std::strerror(errno));
+		LOGE("Unspecified error in output callback: " <<  std::strerror(errno));
+		shutdown();
+		return;
 	}
 
 
@@ -152,6 +156,7 @@ void Sender::onOutput(ev::io& w, int revents)
 		if (mIsClosing) {
 			// And it was the last message in this connection
 			shutdown();
+			return;
 		}
 
 
@@ -183,7 +188,9 @@ void Sender::onOutput(ev::io& w, int revents)
 			shutdown();
 			return;
 		}
-		THROW("write() failed with: " <<  std::strerror(errno));
+		LOGE("write() failed with: " <<  std::strerror(errno));
+		shutdown();
+		return;
 	}
 
 	if (n == 0) {
