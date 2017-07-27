@@ -114,6 +114,11 @@ void Receiver::onInput(ev::io& w, int revents)
 			return;
 		}
 
+		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+			LOGD("Neglected error when reading the Receiver's socket:" <<  std::strerror(errno));
+			return;
+		}
+
 		LOGE("Error when reading the Receiver's socket:" <<  std::strerror(errno));
 		shutdown();
 		return;
