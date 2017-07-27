@@ -129,8 +129,9 @@ void Receiver::onInput(ev::io& w, int revents)
 	if (nparsed != received) {
 		LOGE("Http parser error. Name: " << http_errno_name(static_cast<http_errno>(mParser->http_errno))
 		     << " Description: " << http_errno_description(static_cast<http_errno>(mParser->http_errno)));
-		     shutdown();
-		     return;
+		LOGD("Wrong data: " << std::string(buf.begin(), buf.end()));
+		shutdown();
+		return;
 	}
 
 	if (received == 0) {
