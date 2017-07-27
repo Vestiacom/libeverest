@@ -127,9 +127,10 @@ void Receiver::onInput(ev::io& w, int revents)
 	// Start / continue parsing. We pass received==0 to signal that EOF has been received
 	ssize_t nparsed = http_parser_execute(mParser.get(), &mParserSettings, buf.data(), received);
 	if (nparsed != received) {
-		LOGE("Http parser error");
-		shutdown();
-		return;
+		LOGE("Http parser error. Name: " << http_errno_name(static_cast<http_errno>(mParser->http_errno))
+		     << " Description: " << http_errno_description(static_cast<http_errno>(mParser->http_errno)));
+		     shutdown();
+		     return;
 	}
 
 	if (received == 0) {
