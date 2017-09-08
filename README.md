@@ -13,6 +13,11 @@ make
 sudo make install
 ```
 
+# Test
+```sh
+./everest-tests --catch_system_errors=no
+```
+
 # Example usage
 ```cpp
 
