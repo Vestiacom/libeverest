@@ -74,6 +74,39 @@ BOOST_AUTO_TEST_CASE(POST)
 	BOOST_CHECK(isOK);
 }
 
+BOOST_AUTO_TEST_CASE(POSTAsync)
+{
+	bool isOK = false;
+
+	struct ev_loop* loop = EV_DEFAULT;
+
+	Server s(TEST_CONFIG, loop);
+	s.endpoint(TEST_URL, [&](const std::shared_ptr<Request>& r) {
+		std::thread([r, &isOK, &loop, &s] {
+			isOK = r->getURL() == TEST_URL
+			&& r->getHeader(TEST_HEADER_KEY) == TEST_HEADER_VALUE
+			&& r->getBody() == TEST_BODY;
+		}).detach();
+	});
+
+	s.endpoint("/stop", [&](const std::shared_ptr<Request>&) {
+		s.stop();
+		ev_break(loop, EVBREAK_ALL);
+	});
+
+	s.start();
+
+	runParallel("wget -T 1 --tries=1 -q --post-data=\'" + TEST_BODY
+	            + "\' --header=\'" + TEST_HEADER_KEY + ":" + TEST_HEADER_VALUE
+	            + "\' localhost:" + std::to_string(TEST_PORT)
+	            + TEST_URL);
+
+	runParallel("wget -T 1 --tries=1 -q localhost:" + std::to_string(TEST_PORT) + "/stop");
+
+	ev_run(loop, 0);
+
+	BOOST_CHECK(isOK);
+}
 
 BOOST_AUTO_TEST_CASE(LoadTest)
 {
