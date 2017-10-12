@@ -6,6 +6,7 @@
 #include "internals/connection.hpp"
 #include "request.hpp"
 #include <iostream>
+#include <thread>
 
 BOOST_AUTO_TEST_SUITE(ConnectionTestSuite)
 
@@ -53,6 +54,46 @@ BOOST_AUTO_TEST_CASE(ReceiveData)
 	ev_run(loop, 0);
 
 	BOOST_CHECK(isOK);
+}
+
+BOOST_AUTO_TEST_CASE(ReceiveManyRequests)
+{
+	int fd[2];
+	BOOST_CHECK(pipe(fd) != 1);
+
+	bool isOK = false;
+	size_t maxCounter = 100000;
+	size_t counter = 0;
+
+	struct ev_loop* loop = EV_DEFAULT;
+
+	Connection c(fd[0], loop, [&](const std::shared_ptr<Request>& r) {
+		isOK = r->getBody() == TEST_BODY
+		       && r->getURL() == TEST_URL
+		       && r->getHeader(TEST_HEADER_KEY) == TEST_HEADER_VALUE;
+
+		++counter;
+
+		if (!isOK || counter == maxCounter) {
+			ev_break(loop, EVBREAK_ALL);
+			return;
+		}
+
+	});
+	c.start();
+
+
+	std::thread t([&]() {
+		for (size_t i = 0; i < maxCounter; ++i) {
+			BOOST_CHECK(-1 != ::write(fd[1], TEST_DATA.c_str(), TEST_DATA.size()));
+		}
+	});
+
+	ev_run(loop, 0);
+
+	BOOST_CHECK(isOK);
+	BOOST_CHECK_EQUAL(counter, maxCounter);
+	t.join();
 }
 
 BOOST_AUTO_TEST_SUITE_END()
