@@ -40,6 +40,7 @@ struct EVEREST_API Request {
 	const std::string& getURL() const;
 	const std::string getHeader(const std::string& key);
 	std::string getBody() const;
+	std::string toString() const;
 
 	// Respond
 	std::shared_ptr<Response> createResponse();

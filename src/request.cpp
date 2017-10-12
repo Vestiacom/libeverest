@@ -63,6 +63,25 @@ const std::string Request::getHeader(const std::string& key)
 	return "";
 }
 
+std::string Request::toString() const
+{
+	std::stringstream out;
+	out << "Method: " << mMethod << std::endl;
+	out << std::endl;
+
+	out << "Headers: " <<  std::endl;
+	for (auto header : mHeaders) {
+		out << header.first << ": " << header.second << std::endl;
+	}
+	out << std::endl;
+
+
+	out << "Body: " <<  std::endl;
+	out << getBody();
+
+	return out.str();
+}
+
 void Request::appendBody(const std::string& chunk)
 {
 	mBodyStream << chunk;

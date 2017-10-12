@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "request.hpp"
+#include <iostream>
 
 
 const std::string TEST_URL = "http://some/url";
@@ -55,6 +56,19 @@ BOOST_AUTO_TEST_CASE(Body)
 
 	r.appendBody(TEST_BODY);
 	BOOST_CHECK_EQUAL(TEST_BODY + TEST_BODY, r.getBody());
+}
+
+BOOST_AUTO_TEST_CASE(ToString)
+{
+	Request r(nullptr);
+	r.setMethod(static_cast<unsigned int>(HTTPMethod::HTTP_GET));
+	r.appendURL(TEST_URL);
+	for (int i = 0; i < 10; ++i) {
+		auto x = std::to_string(i);
+		r.setHeader(x, x);
+	}
+	r.appendBody(TEST_BODY);
+	std::cout << r.toString() << std::endl;
 }
 
 BOOST_AUTO_TEST_SUITE_END()
