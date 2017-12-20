@@ -42,3 +42,6 @@ build/
 # Vagrant
 .vagrant
 *.box
+
+# Editor files
+.vscode
