@@ -131,7 +131,6 @@ void Sender::fillBuffer()
 	std::string body = response.getBody();
 	std::copy(body.begin(), body.end(), std::back_inserter(mOutputBuffer));
 
-
 	// Should this be the last message?
 	mIsClosing = response.isClosing();
 
@@ -207,6 +206,11 @@ void Sender::onOutput(ev::io& w, int revents)
 
 void Sender::send(const std::shared_ptr<Response>& response)
 {
+	// Can't send if disconnected
+	if (isClosed()) {
+		THROW("connection closed, can't send response");
+	}
+
 	mResponses.push(response);
 
 	// Ensure sending data is switched on

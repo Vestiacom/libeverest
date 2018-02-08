@@ -41,7 +41,6 @@ Receiver::Receiver(int fd,
 	setupHttpParser();
 }
 
-
 Receiver::~Receiver()
 {
 	shutdown();

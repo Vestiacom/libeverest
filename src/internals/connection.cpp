@@ -17,7 +17,8 @@ namespace internals {
 Connection::Connection(int fd,
                        struct ev_loop* evLoop,
                        const InputDataCallback& inputDataCallback)
-	: mFD(fd)
+	: mStartTime(std::chrono::steady_clock::now()),
+	  mFD(fd)
 {
 	if (!evLoop) {
 		THROW("ev_loop is null");
@@ -51,6 +52,11 @@ void Connection::stop()
 int Connection::getFD()
 {
 	return mFD;
+}
+
+std::chrono::time_point<std::chrono::steady_clock> Connection::getStartTime()
+{
+	return mStartTime;
 }
 
 void Connection::shutdown()

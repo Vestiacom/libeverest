@@ -9,7 +9,7 @@ void runParallel(const std::string& command)
 		int ret = system(command.c_str());
 		(void)ret;
 	});
-	t.detach();
+	t.join();
 }
 
 void runParallel(const std::vector<std::string> commands)

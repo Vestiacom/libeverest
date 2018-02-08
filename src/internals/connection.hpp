@@ -9,6 +9,7 @@
 #include <functional>
 #include <memory>
 #include <ev++.h>
+#include <chrono>
 
 namespace everest {
 
@@ -68,15 +69,23 @@ struct Connection: std::enable_shared_from_this<Connection> {
 	 */
 	bool isClosed();
 
+	/**
+	 * @return when was the connection started
+	 */
+	std::chrono::time_point<std::chrono::steady_clock> getStartTime();
+
 private:
+	// Shutdowns the connection (calls ConnectionLostCallback)
+	void shutdown();
+
 	// Handles receiving data and parsing HTTP requests
 	std::unique_ptr<Receiver> mReceiver;
 
 	// Handles sending HTTP responses
 	std::unique_ptr<Sender> mSender;
 
-	// Shutdowns the connection (calls ConnectionLostCallback)
-	void shutdown();
+	// Connection start time
+	std::chrono::time_point<std::chrono::steady_clock> mStartTime;
 
 	// Socket's fd
 	int mFD;

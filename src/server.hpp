@@ -85,6 +85,9 @@ private:
 
 	// Cleans up references to the unneeded Connection objects
 	EVEREST_LOCAL void removeDisconnected();
+
+	// Sends 408 Request Timeout to connections older than 
+	EVEREST_LOCAL void replyToExpired();
 };
 
 } // namespace everest

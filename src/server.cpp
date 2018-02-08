@@ -72,16 +72,42 @@ void Server::onNewRequest(const std::shared_ptr<Request>& r)
 
 		try {
 			callback(r);
-		} catch (const std::exception& e) {
+		}
+		catch (const std::exception& e) {
 			LOGE("Exception in endpoint: " << r->getURL() << " :" << e.what());
 			auto resp = r->createResponse();
 			resp->setStatus(500);
 			resp->send();
 		}
-	} catch (const std::out_of_range&) {
+	}
+	catch (const std::out_of_range&) {
 		LOGE("No callback for URL, returning 404");
 		auto resp = r->createResponse();
 		resp->setStatus(404);
+		resp->send();
+	}
+}
+
+void Server::replyToExpired()
+{
+	using duration = std::chrono::duration<double>;
+
+	auto now = std::chrono::steady_clock::now();
+	for (auto& c : mConnections) {
+		if (c->isClosed()) {
+			continue;
+		}
+
+		const duration sinceStart = now - c->getStartTime();
+		if (sinceStart.count() < mConfig.maxRequestTimeSec) {
+			// Not old enough to send timeoout
+			continue;
+		}
+
+		LOGW("Connection timed out, responding 408 Request Timeout");
+
+		auto resp = std::make_shared<Response>(c, true /* close after sending this reply */);
+		resp->setStatus(408); // 408 Request Timeout
 		resp->send();
 	}
 }
@@ -104,6 +130,7 @@ void Server::removeDisconnected()
 void Server::onCleanupTimeout(ev::timer&, int)
 {
 	removeDisconnected();
+	replyToExpired();
 	mConnections.shrink_to_fit();
 }
 
