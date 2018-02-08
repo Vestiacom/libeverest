@@ -88,6 +88,8 @@ bool Sender::isClosed()
 
 void Sender::fillBuffer()
 {
+	LOGD("Serializing response...");
+
 	auto& response = *mResponses.front();
 
 	// Status line ------------------------------------------------------------
@@ -175,14 +177,19 @@ void Sender::onOutput(ev::io& w, int revents)
 		fillBuffer();
 	}
 
+	LOGD("Sending response chunk...");
 	ssize_t n  = ::write(w.fd,
 	                     &mOutputBuffer[mOutputBufferPosition],
 	                     mOutputBuffer.size() - mOutputBufferPosition);
+	LOGD("Sent: " << n << "/" << mOutputBuffer.size() - mOutputBufferPosition << " bytes");
+
 	if (n >= 0) {
 		mOutputBufferPosition += n;
-	} else if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+	}
+	else if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
 		// Neglected errors
-	} else {
+	}
+	else {
 		if (errno == ECONNRESET) {
 			// Connection reset by peer.
 			shutdown();

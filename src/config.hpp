@@ -16,6 +16,7 @@ struct EVEREST_API Config {
 	unsigned short port;
 	double cleanupPeriodSec;
 	unsigned maxConnections;
+	double maxRequestTimeSec;
 };
 
 } // namespace everest

@@ -4,8 +4,9 @@
 namespace everest {
 
 Config::Config(const std::string& url)
-	: cleanupPeriodSec(10),
-	  maxConnections(1020)
+	: cleanupPeriodSec(20),
+	  maxConnections(1020),
+	  maxRequestTimeSec(60)
 {
 	internals::URL u(url);
 	ip = u.hostname;

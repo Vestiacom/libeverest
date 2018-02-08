@@ -7,6 +7,8 @@
 
 #include <thread>
 #include "common.hpp"
+#include <chrono>
+#include <thread>
 
 BOOST_AUTO_TEST_SUITE(ServerTestSuite)
 
@@ -18,6 +20,7 @@ const std::string TEST_URL = "/test";
 const std::string TEST_BODY = "TEST BODY";
 const std::string TEST_HEADER_KEY = "A";
 const std::string TEST_HEADER_VALUE = "B";
+std::shared_ptr<Request> request;
 
 BOOST_AUTO_TEST_CASE(BadArgs)
 {
@@ -74,34 +77,59 @@ BOOST_AUTO_TEST_CASE(POST)
 	BOOST_CHECK(isOK);
 }
 
+void replyOK(EV_P_ ev_async* w, int revents)
+{
+	(void) w;
+	(void) revents;
+	(void) loop;
+	auto response = request->createResponse();
+	response->setHeader("A", "B");
+	response->send();
+}
+
 BOOST_AUTO_TEST_CASE(POSTAsync)
 {
 	bool isOK = false;
 
 	struct ev_loop* loop = EV_DEFAULT;
 
+	// Replying has to be done via the same event loop
+	ev_async async;
+	ev_async_init(&async, replyOK);
+	ev_async_start(loop, &async);
+
 	Server s(TEST_CONFIG, loop);
 	s.endpoint(TEST_URL, [&](const std::shared_ptr<Request>& r) {
-		std::thread([r, &isOK, &loop, &s] {
-			isOK = r->getURL() == TEST_URL
-			&& r->getHeader(TEST_HEADER_KEY) == TEST_HEADER_VALUE
-			&& r->getBody() == TEST_BODY;
+		request = r;
+		std::thread([&async, &isOK, &loop, &s] {
+			std::this_thread::sleep_for(std::chrono::milliseconds(300));
+
+			isOK = request->getURL() == TEST_URL
+			&& request->getHeader(TEST_HEADER_KEY) == TEST_HEADER_VALUE
+			&& request->getBody() == TEST_BODY;
+
+			// Trigger sending the reply
+			ev_async_send(loop, &async);
 		}).detach();
 	});
 
 	s.endpoint("/stop", [&](const std::shared_ptr<Request>&) {
 		s.stop();
+		ev_async_stop(loop, &async);
 		ev_break(loop, EVBREAK_ALL);
 	});
 
 	s.start();
 
-	runParallel("wget -T 1 --tries=1 -q --post-data=\'" + TEST_BODY
-	            + "\' --header=\'" + TEST_HEADER_KEY + ":" + TEST_HEADER_VALUE
-	            + "\' localhost:" + std::to_string(TEST_PORT)
-	            + TEST_URL);
+	std::string cmd = "wget -T 1 -q --tries=1 --post-data=\'" + TEST_BODY
+	                  + "\' --header=\'" + TEST_HEADER_KEY + ":" + TEST_HEADER_VALUE
+	                  + "\' localhost:" + std::to_string(TEST_PORT)
+	                  + TEST_URL;
 
-	runParallel("wget -T 1 --tries=1 -q localhost:" + std::to_string(TEST_PORT) + "/stop");
+	std::string stop = "wget -T 1 -q --tries=1 -q localhost:" + std::to_string(TEST_PORT) + "/stop";
+	std::cout << cmd << std::endl;
+
+	runParallel({cmd, stop});
 
 	ev_run(loop, 0);
 
