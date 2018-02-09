@@ -7,6 +7,7 @@
 #include "request.hpp"
 #include <iostream>
 #include <thread>
+#include <sys/socket.h>
 
 BOOST_AUTO_TEST_SUITE(ConnectionTestSuite)
 
@@ -37,7 +38,7 @@ BOOST_AUTO_TEST_CASE(BadArgs)
 BOOST_AUTO_TEST_CASE(ReceiveData)
 {
 	int fd[2];
-	BOOST_CHECK(pipe(fd) != 1);
+	BOOST_CHECK(::socketpair(AF_LOCAL, SOCK_STREAM, 0, fd) != 1);
 
 	bool isOK = false;
 	struct ev_loop* loop = EV_DEFAULT;
@@ -59,7 +60,7 @@ BOOST_AUTO_TEST_CASE(ReceiveData)
 BOOST_AUTO_TEST_CASE(ReceiveManyRequests)
 {
 	int fd[2];
-	BOOST_CHECK(pipe(fd) != 1);
+	BOOST_CHECK(::socketpair(AF_LOCAL, SOCK_STREAM, 0, fd) != 1);
 
 	bool isOK = false;
 	size_t maxCounter = 100000;
