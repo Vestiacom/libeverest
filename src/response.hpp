@@ -48,6 +48,8 @@ struct EVEREST_API Response: std::enable_shared_from_this<Response> {
 
 	void send();
 
+	void setClosing(bool isClosing = true);
+
 	bool isClosing();
 private:
 	headers_t::iterator findHeader(const std::string& key);

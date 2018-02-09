@@ -26,6 +26,11 @@ unsigned short Response::getStatus()
 	return mStatus;
 }
 
+void Response::setClosing(bool isClosing)
+{
+	mIsClosing = isClosing;
+}
+
 bool Response::isClosing()
 {
 	return mIsClosing;
