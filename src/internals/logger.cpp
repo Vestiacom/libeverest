@@ -30,4 +30,10 @@ std::string toString(const LogLevel logLevel)
 	}
 }
 
+void setLogger(const LogCallback& logCallback)
+{
+	internals::gLogCallback = logCallback;
+}
+
+
 } // namespace everest
