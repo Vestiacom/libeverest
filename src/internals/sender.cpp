@@ -141,7 +141,7 @@ void Sender::fillBuffer()
 
 void Sender::onOutput(ev::io& w, int revents)
 {
-	// cout << "onOutput" << endl;
+	LOGD("Ready to send data on fd: " <<  mFD);
 
 	if (EV_ERROR & revents) {
 		LOGE("Unspecified error in output callback: " <<  std::strerror(errno));
@@ -194,7 +194,7 @@ void Sender::onOutput(ev::io& w, int revents)
 			shutdown();
 			return;
 		}
-		LOGE("write() failed with: " <<  std::strerror(errno));
+		LOGD("write() failed with: " <<  std::strerror(errno));
 		shutdown();
 		return;
 	}

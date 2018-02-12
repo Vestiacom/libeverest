@@ -41,9 +41,11 @@ struct EVEREST_API Request {
 	const std::string getHeader(const std::string& key);
 	std::string getBody() const;
 	std::string toString() const;
+	int getFD() const;
 
 	// Respond
 	std::shared_ptr<Response> createResponse();
+
 
 private:
 	// Methods called only by the Connection, when parsing Request

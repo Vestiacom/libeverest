@@ -68,20 +68,23 @@ void Server::onNewConnection(int fd)
 void Server::onNewRequest(const std::shared_ptr<Request>& r)
 {
 	try {
+		LOGD("New request on connection fd: " << r->getFD());
+
 		auto& callback = mEndpointCallbacks.at(r->getURL());
 
 		try {
 			callback(r);
 		}
 		catch (const std::exception& e) {
-			LOGE("Exception in endpoint: " << r->getURL() << " :" << e.what());
+			LOGE("Exception in endpoint: " << r->getURL() << ", fd: " << r->getFD() << " :" << e.what());
 			auto resp = r->createResponse();
 			resp->setStatus(500);
+			resp->setClosing(true);
 			resp->send();
 		}
 	}
 	catch (const std::out_of_range&) {
-		LOGE("No callback for URL, returning 404");
+		LOGE("No callback for URL: " << r->getURL() << ", returning 404, fd: "  << r->getFD());
 		auto resp = r->createResponse();
 		resp->setStatus(404);
 		resp->send();
@@ -104,9 +107,10 @@ void Server::replyToExpired()
 			continue;
 		}
 
-		LOGW("Connection timed out, responding 408 Request Timeout");
+		LOGW("Connection timed out, responding 408 Request Timeout. fd: " << c->getFD());
 
 		auto resp = std::make_shared<Response>(c, true /* close after sending this reply */);
+		resp->setClosing(true);
 		resp->setStatus(408); // 408 Request Timeout
 		resp->send();
 	}
@@ -117,10 +121,12 @@ void Server::removeDisconnected()
 	mConnections.erase(std::remove_if(mConnections.begin(),
 	                                  mConnections.end(),
 	[this](const std::shared_ptr<internals::Connection> c) {
-		if (!c) {
+		if (!c || c->isClosed()) {
+			LOGD("Garbage collecting connection, fd: " << c->getFD());
 			return true;
 		}
-		return c->isClosed();
+
+		return false;
 	}), mConnections.end());
 
 	// Stop or resume accepting more connections

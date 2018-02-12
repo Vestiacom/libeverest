@@ -92,6 +92,11 @@ std::string Request::getBody() const
 	return mBodyStream.str();
 }
 
+int Request::getFD() const
+{
+	return mConnection->getFD();
+}
+
 std::shared_ptr<Response> Request::createResponse()
 {
 	bool isClosing = getHeader("Connection") == "close";
