@@ -69,7 +69,7 @@ void Sender::shutdown()
 	stop();
 
 	if (-1 == ::shutdown(mFD, SHUT_WR)) {
-		LOGW("shutdown() failed with: " <<  std::strerror(errno));
+		LOGD("shutdown() failed with: " <<  std::strerror(errno));
 	}
 	mFD = -1;
 
