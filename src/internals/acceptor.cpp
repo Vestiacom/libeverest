@@ -91,21 +91,29 @@ void Acceptor::stop()
 
 void Acceptor::onNewConnection(ev::io& w, int revents)
 {
-	LOGD("Accepting new connection");
-	if (EV_ERROR & revents) {
-		// Unspecified error
-		LOGE("Unspecified on accepting socket");
-	}
+	try {
+		LOGD("Accepting new connection");
+		if (EV_ERROR & revents) {
+			// Unspecified error
+			LOGE("Unspecified on accepting socket");
+		}
 
-	// New proxy connection
-	int fd = ::accept4(w.fd, NULL, NULL, SOCK_NONBLOCK);
-	if (fd < 0) {
-		LOGW("accept4() failed with " << std::strerror(errno));
-		return;
-	}
+		// New proxy connection
+		int fd = ::accept4(w.fd, NULL, NULL, SOCK_NONBLOCK);
+		if (fd < 0) {
+			LOGW("accept4() failed with " << std::strerror(errno));
+			return;
+		}
 
-	if (mNewConnectionCallback) {
-		mNewConnectionCallback(fd);
+		if (mNewConnectionCallback) {
+			mNewConnectionCallback(fd);
+		}
+	}
+	catch (const std::exception& e) {
+		LOGE("Unexpected exception: " << e.what());
+	}
+	catch (...) {
+		LOGE("Unexpected exception");
 	}
 }
 

@@ -135,9 +135,17 @@ void Server::removeDisconnected()
 
 void Server::onCleanupTimeout(ev::timer&, int)
 {
-	removeDisconnected();
-	replyToExpired();
-	mConnections.shrink_to_fit();
+	try {
+		removeDisconnected();
+		replyToExpired();
+		mConnections.shrink_to_fit();
+	}
+	catch (const std::exception& e) {
+		LOGE("Unexpected exception: " << e.what());
+	}
+	catch (...) {
+		LOGE("Unexpected exception");
+	}
 }
 
 std::size_t Server::getConnectionsNumber() const

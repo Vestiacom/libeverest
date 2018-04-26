@@ -96,45 +96,53 @@ bool Receiver::isClosed()
 
 void Receiver::onInput(ev::io& w, int revents)
 {
-	if (EV_ERROR & revents) {
-		LOGW("Unspecified error in input callback: " <<  std::strerror(errno));
-		shutdown();
-		return;
-	}
-
-	// Make this configurable
-	std::vector<char> buf(1024);
-
-	ssize_t received = ::read(w.fd, buf.data(), buf.size());
-	if (received < 0) {
-		if (errno == ECONNRESET) {
-			// Connection reset by peer.
+	try {
+		if (EV_ERROR & revents) {
+			LOGW("Unspecified error in input callback: " <<  std::strerror(errno));
 			shutdown();
 			return;
 		}
 
-		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-			LOGD("Neglected error when reading the Receiver's socket:" <<  std::strerror(errno));
+		// Make this configurable
+		std::vector<char> buf(1024);
+
+		ssize_t received = ::read(w.fd, buf.data(), buf.size());
+		if (received < 0) {
+			if (errno == ECONNRESET) {
+				// Connection reset by peer.
+				shutdown();
+				return;
+			}
+
+			if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+				LOGD("Neglected error when reading the Receiver's socket:" <<  std::strerror(errno));
+				return;
+			}
+
+			LOGE("Error when reading the Receiver's socket:" <<  std::strerror(errno));
+			shutdown();
 			return;
 		}
 
-		LOGE("Error when reading the Receiver's socket:" <<  std::strerror(errno));
-		shutdown();
-		return;
-	}
+		// Start / continue parsing. We pass received==0 to signal that EOF has been received
+		ssize_t nparsed = http_parser_execute(mParser.get(), &mParserSettings, buf.data(), received);
+		if (nparsed != received) {
+			LOGE("Http parser error. Name: " << http_errno_name(static_cast<http_errno>(mParser->http_errno))
+			     << " Description: " << http_errno_description(static_cast<http_errno>(mParser->http_errno)));
+			LOGD("Wrong data: " << std::string(buf.begin(), buf.end()));
+			shutdown();
+			return;
+		}
 
-	// Start / continue parsing. We pass received==0 to signal that EOF has been received
-	ssize_t nparsed = http_parser_execute(mParser.get(), &mParserSettings, buf.data(), received);
-	if (nparsed != received) {
-		LOGE("Http parser error. Name: " << http_errno_name(static_cast<http_errno>(mParser->http_errno))
-		     << " Description: " << http_errno_description(static_cast<http_errno>(mParser->http_errno)));
-		LOGD("Wrong data: " << std::string(buf.begin(), buf.end()));
-		shutdown();
-		return;
+		if (received == 0) {
+			shutdown();
+		}
 	}
-
-	if (received == 0) {
-		shutdown();
+	catch (const std::exception& e) {
+		LOGE("Unexpected exception: " << e.what());
+	}
+	catch (...) {
+		LOGE("Unexpected exception");
 	}
 }
 
@@ -142,7 +150,8 @@ void Receiver::resetRequest()
 {
 	try {
 		mRequest = std::make_shared<Request>(mConnection.shared_from_this());
-	} catch (std::bad_weak_ptr& e) {
+	}
+	catch (std::bad_weak_ptr& e) {
 		// Pathological situation - Connection isn't owned by by shared_ptr.
 		// This exception is thrown since in C++17
 		mRequest = std::make_shared<Request>(nullptr);
@@ -157,7 +166,8 @@ int Receiver::onMessageBegin(::http_parser* parser)
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
 		return -1;
@@ -173,7 +183,8 @@ int Receiver::onMessageComplete(::http_parser* parser)
 		}
 		// Continue parsing
 		return 0;
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
 		return -1;
@@ -190,7 +201,8 @@ int Receiver::onURL(::http_parser* parser, const char* at, size_t length)
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
 		return -1;
@@ -224,7 +236,8 @@ int Receiver::onHeaderField(::http_parser* parser, const char* at, size_t length
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
 		return -1;
@@ -251,7 +264,8 @@ int Receiver::onHeaderValue(::http_parser* parser, const char* at, size_t length
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
 		return -1;
@@ -275,7 +289,8 @@ int Receiver::onHeadersComplete(::http_parser* parser)
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
 		return -1;
@@ -290,7 +305,8 @@ int Receiver::onBody(::http_parser* parser, const char* at, size_t length)
 
 		// Continue parsing
 		return 0;
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
 		return -1;

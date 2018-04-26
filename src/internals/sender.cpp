@@ -141,66 +141,74 @@ void Sender::fillBuffer()
 
 void Sender::onOutput(ev::io& w, int revents)
 {
-	LOGD("Ready to send data on fd: " <<  mFD);
+	try {
+		LOGD("Ready to send data on fd: " <<  mFD);
 
-	if (EV_ERROR & revents) {
-		LOGE("Unspecified error in output callback: " <<  std::strerror(errno));
-		shutdown();
-		return;
-	}
-
-
-	// Ensure output buffer has any data to send
-	if (mOutputBufferPosition >= mOutputBuffer.size()) {
-		// No data to send in mOutputBuffer.
-
-		if (mIsClosing) {
-			// And it was the last message in this connection
+		if (EV_ERROR & revents) {
+			LOGE("Unspecified error in output callback: " <<  std::strerror(errno));
 			shutdown();
 			return;
 		}
 
 
-		if (mResponses.empty()) {
-			// And there's no more responses to send.
-			// Pause sending and free the buffer.
+		// Ensure output buffer has any data to send
+		if (mOutputBufferPosition >= mOutputBuffer.size()) {
+			// No data to send in mOutputBuffer.
+
+			if (mIsClosing) {
+				// And it was the last message in this connection
+				shutdown();
+				return;
+			}
+
+
+			if (mResponses.empty()) {
+				// And there's no more responses to send.
+				// Pause sending and free the buffer.
+				mOutputBufferPosition = 0;
+				mOutputBuffer.clear();
+				mOutputWatcher.stop();
+				return;
+			}
+
+			// Fill mOutputBuffer with the next serialized Response from the queue.
 			mOutputBufferPosition = 0;
-			mOutputBuffer.clear();
-			mOutputWatcher.stop();
-			return;
+			mOutputBuffer.resize(0);
+			fillBuffer();
 		}
 
-		// Fill mOutputBuffer with the next serialized Response from the queue.
-		mOutputBufferPosition = 0;
-		mOutputBuffer.resize(0);
-		fillBuffer();
-	}
+		LOGD("Sending response chunk...");
+		ssize_t n  = ::write(w.fd,
+		                     &mOutputBuffer[mOutputBufferPosition],
+		                     mOutputBuffer.size() - mOutputBufferPosition);
+		LOGD("Sent: " << n << "/" << mOutputBuffer.size() - mOutputBufferPosition << " bytes");
 
-	LOGD("Sending response chunk...");
-	ssize_t n  = ::write(w.fd,
-	                     &mOutputBuffer[mOutputBufferPosition],
-	                     mOutputBuffer.size() - mOutputBufferPosition);
-	LOGD("Sent: " << n << "/" << mOutputBuffer.size() - mOutputBufferPosition << " bytes");
-
-	if (n >= 0) {
-		mOutputBufferPosition += n;
-	}
-	else if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-		// Neglected errors
-	}
-	else {
-		if (errno == ECONNRESET) {
-			// Connection reset by peer.
+		if (n >= 0) {
+			mOutputBufferPosition += n;
+		}
+		else if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
+			// Neglected errors
+		}
+		else {
+			if (errno == ECONNRESET) {
+				// Connection reset by peer.
+				shutdown();
+				return;
+			}
+			LOGD("write() failed with: " <<  std::strerror(errno));
 			shutdown();
 			return;
 		}
-		LOGD("write() failed with: " <<  std::strerror(errno));
-		shutdown();
-		return;
-	}
 
-	if (n == 0) {
-		shutdown();
+		if (n == 0) {
+			shutdown();
+		}
+	}
+	catch (const std::exception& e) {
+		LOGE("Unexpected exception: " << e.what());
+	}
+	catch (...) {
+		LOGE("Unexpected exception");
 	}
 }
 
