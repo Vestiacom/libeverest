@@ -62,6 +62,8 @@ typedef std::list<std::pair<std::string, std::string>> headers_t;
   /* RFC-2068, section 19.6.1.2 */  \
   XX(31, LINK,        LINK)         \
   XX(32, UNLINK,      UNLINK)       \
+  /* icecast */                     \
+  XX(33, SOURCE,      SOURCE)       \
 
 enum HTTPMethod {
 #define XX(num, name, string) HTTP_##name = num,
