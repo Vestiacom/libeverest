@@ -25,19 +25,19 @@ extern thread_local LogCallback gLogCallback;
         std::ostringstream msg__;    \
         msg__ << "libeverest: " << MESSAGE << " [" << __FILENAME__ << ":" << __LINE__ << "]" ;   \
         if (everest::internals::gLogCallback){                    \
-        	everest::internals::gLogCallback(everest::LogLevel::ERROR, msg__.str());} \
+            everest::internals::gLogCallback(everest::LogLevel::EVEREST_LOG_LEVEL_ERROR, msg__.str());} \
         throw std::runtime_error(msg__.str()); \
         } while (0)
 
-#define LOGE(MESSAGE) LOG(everest::LogLevel::ERROR, MESSAGE)
-#define LOGW(MESSAGE) LOG(everest::LogLevel::WARN, MESSAGE)
-#define LOGI(MESSAGE) LOG(everest::LogLevel::INFO, MESSAGE)
+#define LOGE(MESSAGE) LOG(everest::LogLevel::EVEREST_LOG_LEVEL_ERROR, MESSAGE)
+#define LOGW(MESSAGE) LOG(everest::LogLevel::EVEREST_LOG_LEVEL_WARN, MESSAGE)
+#define LOGI(MESSAGE) LOG(everest::LogLevel::EVEREST_LOG_LEVEL_INFO, MESSAGE)
 
 
 #if !defined(NDEBUG)
 
-#define LOGD(MESSAGE) LOG(everest::LogLevel::DEBUG, MESSAGE)
-#define LOGT(MESSAGE) LOG(everest::LogLevel::TRACE, MESSAGE)
+#define LOGD(MESSAGE) LOG(everest::LogLevel::EVEREST_LOG_LEVEL_DEBUG, MESSAGE)
+#define LOGT(MESSAGE) LOG(everest::LogLevel::EVEREST_LOG_LEVEL_TRACE, MESSAGE)
 
 #else
 

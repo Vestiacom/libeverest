@@ -8,11 +8,11 @@ namespace everest {
 
 /// Log level used in the logging callback
 enum class LogLevel : int {
-	TRACE,
-	DEBUG,
-	INFO,
-	WARN,
-	ERROR,
+	EVEREST_LOG_LEVEL_TRACE,
+	EVEREST_LOG_LEVEL_DEBUG,
+	EVEREST_LOG_LEVEL_INFO,
+	EVEREST_LOG_LEVEL_WARN,
+	EVEREST_LOG_LEVEL_ERROR
 };
 
 typedef std::function<void(LogLevel, const std::string& message)> LogCallback;
