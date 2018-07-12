@@ -8,7 +8,7 @@
 #include "server.hpp"
 #include "request.hpp"
 #include "response.hpp"
-#include "internals/logger.hpp"
+#include "logger.hpp"
 
 
 #endif // EVEREST_EVEREST_HPP_

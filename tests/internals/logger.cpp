@@ -6,13 +6,13 @@
 #include <iostream>
 #include <thread>
 
-#include "internals/logger.hpp"
+#include "logger.hpp"
 #include "types.hpp"
 
 
 BOOST_AUTO_TEST_SUITE(LoggerTestSuite)
 
-using namespace everest::internals;
+using namespace everest;
 
 const unsigned short TEST_PORT = 6000;
 const unsigned short TEST_HOST = 6000;
