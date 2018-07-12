@@ -1,5 +1,5 @@
-#ifndef EVEREST_LOGGER_HPP_
-#define EVEREST_LOGGER_HPP_
+#ifndef EVEREST_LOG_HPP_
+#define EVEREST_LOG_HPP_
 
 #include "types.hpp"
 
@@ -11,4 +11,4 @@ void setLogger(const LogCallback& logCallback);
 
 } // namespace internals
 
-#endif // EVEREST_LOGGER_HPP_
+#endif // EVEREST_LOG_HPP_

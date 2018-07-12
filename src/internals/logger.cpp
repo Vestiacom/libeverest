@@ -1,5 +1,5 @@
 #include "logger.hpp"
-#include "../logger.hpp"
+#include "../log.hpp"
 
 namespace everest {
 namespace internals {

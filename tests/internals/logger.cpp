@@ -6,7 +6,7 @@
 #include <iostream>
 #include <thread>
 
-#include "logger.hpp"
+#include "log.hpp"
 #include "types.hpp"
 
 

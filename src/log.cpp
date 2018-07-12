@@ -1,4 +1,4 @@
-#include "logger.hpp"
+#include "log.hpp"
 #include "internals/logger.hpp"
 
 namespace everest {
