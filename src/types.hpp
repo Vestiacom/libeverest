@@ -15,7 +15,7 @@ enum class LogLevel : int {
 	EVEREST_LOG_LEVEL_ERROR
 };
 
-typedef std::function<void(LogLevel, const std::string& message)> LogCallback;
+typedef std::function<void(everest::LogLevel, const std::string& message)> LogCallback;
 
 typedef std::list<std::pair<std::string, std::string>> headers_t;
 
