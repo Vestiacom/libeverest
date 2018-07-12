@@ -21,7 +21,7 @@ typedef std::list<std::pair<std::string, std::string>> headers_t;
 
 
 // Copied from http-parser
-#define HTTP_METHOD_MAP(XX)         \
+#define EVEREST_HTTP_METHOD_MAP(XX)         \
   XX(0,  DELETE,      DELETE)       \
   XX(1,  GET,         GET)          \
   XX(2,  HEAD,        HEAD)         \
@@ -67,7 +67,7 @@ typedef std::list<std::pair<std::string, std::string>> headers_t;
 
 enum HTTPMethod {
 #define XX(num, name, string) HTTP_##name = num,
-	HTTP_METHOD_MAP(XX)
+	EVEREST_HTTP_METHOD_MAP(XX)
 #undef XX
 };
 
