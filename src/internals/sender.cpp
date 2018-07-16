@@ -29,6 +29,7 @@ namespace internals {
 Sender::Sender(int fd, struct ev_loop* evLoop)
 	: mOutputWatcher(evLoop),
 	  mFD(fd),
+	  mOutputBufferPosition(0),
 	  mIsClosing(false)
 {
 	if (!evLoop) {
