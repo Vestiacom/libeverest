@@ -3,7 +3,7 @@ project(everest) # Same as library's name
 
 ## Build configuration ########################################################
 if(NOT DEFINED VERSION)
-    set(VERSION "1.2.5")
+    set(VERSION "1.2.6")
 endif(NOT DEFINED VERSION)
 
 if(NOT CMAKE_BUILD_TYPE)
