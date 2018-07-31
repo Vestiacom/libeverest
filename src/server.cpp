@@ -68,26 +68,36 @@ void Server::onNewConnection(int fd)
 void Server::onNewRequest(const std::shared_ptr<Request>& r)
 {
 	try {
-		LOGD("New request on connection fd: " << r->getFD());
-
-		auto& callback = mEndpointCallbacks.at(r->getURL());
-
 		try {
-			callback(r);
+			LOGD("New request on connection fd: " << r->getFD());
+
+			auto& callback = mEndpointCallbacks.at(r->getURL());
+
+			try {
+				callback(r);
+			}
+			catch (const std::exception& e) {
+				LOGE("Exception in endpoint: " << r->getURL() << ", fd: " << r->getFD() << " :" << e.what());
+				auto resp = r->createResponse();
+				resp->setStatus(500);
+				resp->setClosing(true);
+				resp->send();
+			}
 		}
-		catch (const std::exception& e) {
-			LOGE("Exception in endpoint: " << r->getURL() << ", fd: " << r->getFD() << " :" << e.what());
+		catch (const std::out_of_range&) {
+			LOGE("No callback for URL: " << r->getURL() << ", returning 404, fd: "  << r->getFD());
 			auto resp = r->createResponse();
-			resp->setStatus(500);
+			resp->setStatus(404);
 			resp->setClosing(true);
 			resp->send();
 		}
 	}
-	catch (const std::out_of_range&) {
-		LOGE("No callback for URL: " << r->getURL() << ", returning 404, fd: "  << r->getFD());
-		auto resp = r->createResponse();
-		resp->setStatus(404);
-		resp->send();
+	catch (const std::exception& e) {
+		// Most probably send from the catch threw
+		LOGE("Unexpected exception in endpoint handler:" << e.what());
+	}
+	catch (...) {
+		LOGE("Unexpected exception");
 	}
 }
 
@@ -109,10 +119,15 @@ void Server::replyToExpired()
 
 		LOGW("Connection timed out, responding 408 Request Timeout. fd: " << c->getFD());
 
-		auto resp = std::make_shared<Response>(c, true /* close after sending this reply */);
-		resp->setClosing(true);
-		resp->setStatus(408); // 408 Request Timeout
-		resp->send();
+		try {
+			auto resp = std::make_shared<Response>(c, true /* close after sending this reply */);
+			resp->setClosing(true);
+			resp->setStatus(408); // 408 Request Timeout
+			resp->send();
+		}
+		catch (const std::exception& e) {
+			LOGW("Exception when sending a reply to expired request: " << e.what());
+		}
 	}
 }
 

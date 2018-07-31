@@ -170,8 +170,11 @@ int Receiver::onMessageBegin(::http_parser* parser)
 	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
-		return -1;
 	}
+	catch (...) {
+		LOGE("Unexpected exception");
+	}
+	return -1;
 }
 
 int Receiver::onMessageComplete(::http_parser* parser)
@@ -187,8 +190,11 @@ int Receiver::onMessageComplete(::http_parser* parser)
 	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
-		return -1;
 	}
+	catch (...) {
+		LOGE("Unexpected exception");
+	}
+	return -1;
 }
 
 int Receiver::onURL(::http_parser* parser, const char* at, size_t length)
@@ -205,8 +211,11 @@ int Receiver::onURL(::http_parser* parser, const char* at, size_t length)
 	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
-		return -1;
 	}
+	catch (...) {
+		LOGE("Unexpected exception");
+	}
+	return -1;
 }
 
 int Receiver::onHeaderField(::http_parser* parser, const char* at, size_t length)
@@ -240,8 +249,11 @@ int Receiver::onHeaderField(::http_parser* parser, const char* at, size_t length
 	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
-		return -1;
 	}
+	catch (...) {
+		LOGE("Unexpected exception");
+	}
+	return -1;
 }
 
 int Receiver::onHeaderValue(::http_parser* parser, const char* at, size_t length)
@@ -268,8 +280,11 @@ int Receiver::onHeaderValue(::http_parser* parser, const char* at, size_t length
 	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
-		return -1;
 	}
+	catch (...) {
+		LOGE("Unexpected exception");
+	}
+	return -1;
 }
 
 int Receiver::onHeadersComplete(::http_parser* parser)
@@ -293,8 +308,11 @@ int Receiver::onHeadersComplete(::http_parser* parser)
 	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
-		return -1;
 	}
+	catch (...) {
+		LOGE("Unexpected exception");
+	}
+	return -1;
 }
 
 int Receiver::onBody(::http_parser* parser, const char* at, size_t length)
@@ -309,8 +327,11 @@ int Receiver::onBody(::http_parser* parser, const char* at, size_t length)
 	catch (const std::exception& e) {
 		// Stop parsing the request
 		LOGE("Got exception in parsing HTTP: " << e.what());
-		return -1;
 	}
+	catch (...) {
+		LOGE("Unexpected exception");
+	}
+	return -1;
 }
 
 } // namespace internals
