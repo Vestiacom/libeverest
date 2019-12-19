@@ -42,6 +42,8 @@ struct EVEREST_API Request {
 	std::string getBody() const;
 	std::string toString() const;
 	int getFD() const;
+	std::string getUID() const;
+	void assignUID();
 
 	// Respond
 	std::shared_ptr<Response> createResponse();
@@ -62,6 +64,9 @@ private:
 	HTTPMethod mMethod;
 	std::string mURL;
 	std::stringstream mBodyStream;
+
+	// Helper fields
+	std::string mUID;
 
 	// Reference to the connection. Needed to create the Response object.
 	// We don't keep the Response here to allow deleting Response before Request.

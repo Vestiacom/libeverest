@@ -1,6 +1,8 @@
 #include "request.hpp"
 
 #include <algorithm> // for std::find
+#include <random> // for generating UID
+#include <algorithm> // for generating UID
 
 namespace everest {
 
@@ -101,6 +103,31 @@ std::shared_ptr<Response> Request::createResponse()
 {
 	bool isClosing = getHeader("Connection") == "close";
 	return std::make_shared<Response>(mConnection, isClosing);
+}
+
+std::string  Request::getUID() const
+{
+	return mUID;
+}
+
+void Request::assignUID()
+{
+	mUID = getHeader("X-Request-ID");
+	if (mUID.empty()) {
+		// Create a random made of printable chars
+
+		const char characters[] =
+		    "0123456789"
+		    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		    "abcdefghijklmnopqrstuvwxyz";
+		std::random_device rd;
+		std::uniform_int_distribution<int> dist(0, sizeof(characters) - 1);
+
+		mUID.resize(24);
+		std::generate(mUID.begin(), mUID.end(), [&dist, &characters, &rd]() {
+			return characters[dist(rd)];
+		});
+	}
 }
 
 

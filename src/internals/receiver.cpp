@@ -182,6 +182,7 @@ int Receiver::onMessageComplete(::http_parser* parser)
 	try {
 		Receiver& rec = *static_cast<Receiver*>(parser->data);
 		if (rec.mInputDataCallback) {
+			rec.mRequest->assignUID();
 			rec.mInputDataCallback(rec.mRequest);
 		}
 		// Continue parsing
